@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"
+     color="#d9a441" role="img" aria-label="hammer">
+    <!-- hammer: paste these children back into DEVICE_MARKUP.hammer in lib/hud.js. -->
+  <g id="device" fill="currentColor">
+    <path d="M286.844 458.074H223.631V192.532H286.844V458.074ZM415.513 174.255H88.9971V107.074L141.622 55.0703H415.513V174.255Z" fill="currentColor"/>
+  </g>
+</svg>

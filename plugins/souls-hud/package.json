@@ -1,0 +1,39 @@
+{
+  "name": "dsh-plugin-souls-hud",
+  "version": "0.4.0",
+  "private": true,
+  "description": "Souls HUD \u2014 the Dark Souls III style covenant-medal vitals cluster that BuilderHUD ships",
+  "type": "module",
+  "main": "lib/host.js",
+  "exports": {
+    ".": {
+      "default": "./lib/host.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json",
+    "./locale/*": "./locale/*"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "client": {
+      "platform": "web"
+    }
+  },
+  "files": [
+    "lib/host.js",
+    "lib/client.js",
+    "lib/hud.js",
+    "lib/hud.css",
+    "README.md",
+    "locale/zh.json",
+    "locale/en.json",
+    "lib/tariff.js",
+    "lib/holidays.js",
+    "data/holidays-cn.json",
+    "assets",
+    "locale"
+  ],
+  "license": "MIT"
+}

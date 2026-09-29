@@ -1,0 +1,29 @@
+{
+  "name": "dsh-plugin-builder-hud",
+  "version": "0.4.0",
+  "private": true,
+  "description": "BuilderHUD — a bundle of customizable vitals-cluster skins for the DSH sidebar. It ships the Souls HUD.",
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json",
+    "./locale/*": "./locale/*"
+  },
+  "dependencies": {
+    "dsh-plugin-souls-hud": "link:../souls-hud"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "cordis.patch.yml",
+    "README.md",
+    "icon.svg",
+    "locale/zh.json",
+    "locale/en.json"
+  ],
+  "license": "MIT",
+  "icon": "./icon.svg"
+}

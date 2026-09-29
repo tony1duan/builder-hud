@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"
+     color="#d9a441" role="img" aria-label="moon">
+    <!-- moon: paste these children back into DEVICE_MARKUP.moon in lib/hud.js. -->
+  <g id="device" fill="currentColor">
+    <path d="M256 40C375.294 40 472 136.706 472 256C472 375.294 375.294 472 256 472C136.706 472 40 375.294 40 256C40 136.706 136.706 40 256 40ZM296.539 82.4678C200.7 82.4678 123.007 160.161 123.007 256C123.007 351.839 200.7 429.532 296.539 429.532C392.378 429.532 470.071 351.839 470.071 256C470.071 160.161 392.378 82.4678 296.539 82.4678Z" fill="currentColor"/>
+  </g>
+</svg>

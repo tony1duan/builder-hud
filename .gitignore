@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Internal working notes — reverse-engineering and session handoffs. Never public:
+# these describe this machine, the app's internals, and the process behind the code.
+notes/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Scratch
+*.tmp

@@ -1,0 +1,62 @@
+# The BuilderHUD bundle patch: one row, the Souls HUD.
+#
+# A bundle's patch is composed onto the profile root before the user's
+# cordis.patch.yml, and rows are addressed by id with the last write winning —
+# which is exactly how the Plugins page's switch persists itself, as a
+# `- id: souls-hud` / `disabled: true|false` row in the profile.
+#
+# The row's `name` is a **separate package**, `dsh-plugin-souls-hud`, and that
+# is load-bearing rather than cosmetic:
+#
+#   - its own `locale/` directory is what gives the row the name "Souls HUD"
+#     while this bundle's card stays "BuilderHUD";
+#   - `dsh-client-modules` discovers a browser half only for an *exact* package
+#     specifier (`exactPackageSpecifier` rejects anything containing "/"), so a
+#     `dsh-plugin-builder-hud/souls-hud` subpath row silently loses its client
+#     half — no settings form, and no renderer on the page. Two packages are the
+#     only shape that gives the component its own name *and* a browser half.
+#
+# A patch replaces the targeted row's whole `config` rather than merging into
+# it, so the full configuration lives here even where it matches the defaults.
+
+- insert:
+    - id: souls-hud
+      name: 'dsh-plugin-souls-hud'
+      config:
+        # CNY amount that fills each wallet bar (100%). One cap per bar: the
+        # topped-up wallet and the granted wallet are spent differently, so they
+        # do not have to share a scale.
+        hpTargetCny: 50
+        fpTargetCny: 50
+        # Browser poll interval and server-side balance cache, ms.
+        pollMs: 15000
+        balanceCacheMs: 60000
+        # Placement: the cluster sits in the left sidebar's brand row, beside a
+        # copy of the official whale mark, and replaces the brand label. The
+        # renderer measures the row and fits the bars, so all three stay the
+        # same length. 'chat' pins to the message area instead; 'frame' uses the
+        # absolute offsets below.
+        anchor: sidebar
+        # Absolute placement for `anchor: frame` / `anchor: chat`, and the
+        # fallback when neither layout is on screen.
+        offsetX: 20
+        offsetY: 40
+        gapX: 10
+        gapY: 10
+        # Fallback bar length; the sidebar anchor measures the row instead.
+        barWidth: 96
+        scale: 1
+        showText: true
+        # The medallion: its silhouette, what is struck into the field, and what
+        # metal it is cast from. All three are also editable in the Plugins page,
+        # and the settings file wins over this row.
+        #   shape:    round (Dark Souls III style covenant medal) | octagon
+        #   device:   whale | hammer | sword | sun | moon | wolf | spear | custom
+        #   material: bronze | iron | silver | gold   (each has a light + dark cut)
+        shape: round
+        device: whale
+        material: bronze
+        # Keep it solid: it is a fixture of the sidebar, not a fading HUD.
+        idleDimMs: 0
+        # Below this percentage a bar pulses.
+        criticalPercent: 25

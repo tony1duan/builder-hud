@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"
+     color="#d9a441" role="img" aria-label="wolf">
+    <!-- wolf: paste these children back into DEVICE_MARKUP.wolf in lib/hud.js. -->
+  <g id="device" fill="currentColor">
+    <path d="M375.142 116.861L468.32 183.884L437.212 187.021L484.219 256.558L422.548 239.923L386.502 342.833L374.174 312.651L350.195 386.49L337.659 361.328L306.117 438.072L251.61 280.015L92.068 248.966L47.591 162.033L157.179 150.982L180.421 126.497L278.893 97.2841L379.818 42.8256L375.142 116.861ZM187.845 154.854C187.882 154.9 195.242 164.109 209.418 163.392C223.614 162.673 242.297 128.722 242.338 128.647L187.845 154.854Z" fill="currentColor"/>
+  </g>
+</svg>

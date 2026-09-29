@@ -1,0 +1,53 @@
+# Append this row to ~/.dsh/profiles/desktop/cordis.patch.yml
+#
+# The profile already contains its own list of patch rows; this is one more
+# top-level array item. Point `name` at the plugin's host entry (a module FILE,
+# not a directory). The desktop profile composes HMR, so this applies without a
+# restart — reload the page to inject the HUD.
+#
+# The id has to match the bundle's own row (`souls-hud`): a different id inserts
+# a *second* row and the Plugins page's switch then toggles only one of them.
+# Point `name` at the Souls HUD package (not the BuilderHUD bundle): the row's
+# own package is what supplies its name and its browser half.
+# When the package is installed as a bundle, this file is unnecessary — the
+# bundle's `cordis.patch.yml` already carries the row.
+#
+# Leave the config block out to accept every default.
+
+- insert:
+    - id: souls-hud
+      name: "/absolute/path/to/plugins/souls-hud/lib/host.js"
+      config:
+        # CNY amount that fills each wallet bar (100%).
+        hpTargetCny: 50
+        fpTargetCny: 50
+        # Browser poll interval and server-side balance cache, ms.
+        pollMs: 15000
+        balanceCacheMs: 60000
+        # Placement: the cluster sits in the left sidebar's brand row, and
+        # replaces the brand label and mark. The renderer measures the row and
+        # fits the bars, so all three stay the same length. 'chat' pins to the
+        # message area instead; 'frame' uses the absolute offsets below.
+        anchor: sidebar
+        # Absolute placement for `anchor: frame` / `anchor: chat`, and the
+        # fallback when neither layout is on screen.
+        offsetX: 20
+        offsetY: 40
+        gapX: 10
+        gapY: 10
+        # Fallback bar length; the sidebar anchor measures the row instead.
+        barWidth: 96
+        scale: 1
+        showText: true
+        # The medallion, as for the bundle patch: its silhouette, its device and
+        # its metal.
+        #   shape:    round (covenant medal) | octagon
+        #   device:   whale | hammer | sword | sun | moon | wolf | spear | custom
+        #   material: bronze | iron | silver | gold   (each has a light + dark cut)
+        shape: round
+        device: whale
+        material: bronze
+        # Keep it solid: it is a fixture of the sidebar, not a fading HUD.
+        idleDimMs: 0
+        # Below this percentage a bar pulses.
+        criticalPercent: 25
