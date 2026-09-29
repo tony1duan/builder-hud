@@ -797,15 +797,15 @@ If the HUD earns its place in your sidebar, here is the tip jar itself:
 
 ![微信赞赏码](./assets/support/wechat.png)
 
-Every channel lives in **one place**, `lib/client.js` — the WeChat 赞赏码 is
-already on, the other four are empty and therefore invisible:
+Every channel lives in **one place**, `lib/client.js` — the WeChat 赞赏码 and
+Ko-fi are already on, the other three are empty and therefore invisible:
 
 ```js
 var SUPPORT = {
   channels: [
     { id: "afdian", kind: "link", url: "" },          // a page to open
     { id: "github", kind: "link", url: "" },
-    { id: "kofi",   kind: "link", url: "" },
+    { id: "kofi",   kind: "link", url: "https://ko-fi.com/tonyhd" },
     { id: "wechat", kind: "qr", file: "wechat.png" }, // an image under assets/support/
     { id: "alipay", kind: "qr", file: "" },
   ],

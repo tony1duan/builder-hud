@@ -77,6 +77,11 @@ sidebar, the tip jar sits at the bottom of the plugin's own settings page:
 
 ![微信赞赏码](plugins/souls-hud/assets/support/wechat.png)
 
+The WeChat 赞赏码 above is the one for readers in China — scan it in WeChat, which
+is the only app that can read it. Everywhere else, there is
+**[Ko-fi](https://ko-fi.com/tonyhd)**; both are offered from the plugin's settings
+page too, as soon as one is open.
+
 Channels live in one place (`SUPPORT` in
 [`plugins/souls-hud/lib/client.js`](plugins/souls-hud/lib/client.js)) and an
 unconfigured channel is not rendered at all. See

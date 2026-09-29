@@ -35,5 +35,11 @@
     "assets",
     "locale"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "funding": [
+    {
+      "type": "ko-fi",
+      "url": "https://ko-fi.com/tonyhd"
+    }
+  ]
 }

@@ -114,7 +114,7 @@ window.__ModuleLoader__.load({
       channels: [
         { id: "afdian", kind: "link", url: "" },
         { id: "github", kind: "link", url: "" },
-        { id: "kofi", kind: "link", url: "" },
+        { id: "kofi", kind: "link", url: "https://ko-fi.com/tonyhd" },
         { id: "wechat", kind: "qr", file: "wechat.png" },
         { id: "alipay", kind: "qr", file: "" },
       ],

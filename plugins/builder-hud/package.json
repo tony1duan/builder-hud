@@ -25,5 +25,11 @@
     "locale/en.json"
   ],
   "license": "MIT",
-  "icon": "./icon.svg"
+  "icon": "./icon.svg",
+  "funding": [
+    {
+      "type": "ko-fi",
+      "url": "https://ko-fi.com/tonyhd"
+    }
+  ]
 }

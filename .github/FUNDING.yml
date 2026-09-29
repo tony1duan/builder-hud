@@ -1,0 +1,6 @@
+# Who to thank, if the HUD earned it. GitHub renders this as the Sponsor button.
+#
+# The WeChat 赞赏码 has no URL to point at — it is an image, and it lives in the
+# repository README's Support section, which is where `custom` sends people.
+ko_fi: tonyhd
+custom: ["https://github.com/tony1duan/builder-hud#support"]
