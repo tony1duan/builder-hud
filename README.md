@@ -5,7 +5,7 @@ Customizable vitals-cluster skins for the DSH sidebar. It ships one: the
 whose shape, device, metal and light/dark cut are all settings, and whose edge
 doubles as a token-burn gauge.
 
-![The cluster in the sidebar](plugins/souls-hud/preview/shots/sidebar-cluster.png)
+![The cluster: an engraved covenant medallion beside the three bars](plugins/souls-hud/preview/shots/cluster-hero.png)
 
 | Bar | Meaning | Colour |
 | --- | --- | --- |

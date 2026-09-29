@@ -758,6 +758,21 @@ by the same `previewCells` the form calls (shooting both proves each cell forces
 its own theme); `#dark`, `#light`, `#critical`, `#damage` and `#zoom` are the
 cluster scenes.
 
+`preview/shots/cluster-hero.png` — the picture at the top of the repository
+README — is the `#full` scene of that same page with the mock window chrome
+hidden and the result cropped to the cluster, so it is the renderer's own output
+and nothing else. Regenerate it the same way:
+
+```sh
+# hide the mock chrome, keep the cluster, shoot at 3x, then trim to the ink
+sed 's#</head>#<style>.chrome,.mockFrame{display:none!important}html,body{background:#1c1c1e!important}</style></head>#' \
+  preview/preview.html > /tmp/hero.html
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --headless=new --disable-gpu --hide-scrollbars --user-data-dir=/tmp/hero-chrome \
+  --force-device-scale-factor=3 --window-size=520,170 --virtual-time-budget=2500 \
+  --screenshot=/tmp/hero-raw.png "file:///tmp/hero.html#full"
+```
+
 ## Tuning the artwork
 
 `lib/hud.css` and `lib/hud.js` are re-read from disk on every request, so
