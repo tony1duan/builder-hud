@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-souls-hud",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "description": "Souls Style \u2014 three action-RPG style bars and an engraved medallion for the DSH sidebar",
   "type": "module",
