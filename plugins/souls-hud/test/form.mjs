@@ -760,7 +760,15 @@ async function mountPatched(source, surface) {
 }
 
 const BUNDLE = 'dsh-plugin-builder-hud'
-const BUNDLE_SUBJECT = { name: BUNDLE, installed: true, enabled: true, rows: [] }
+/**
+ * The subjects the Plugins page actually builds.
+ *
+ * These are copied from `ui-plugin-manager` rather than invented: the first cut of
+ * this test fed the panel `{ name: BUNDLE }`, which is not a shape the app ever
+ * produces, so the suite stayed green while the panel rendered on no page at all.
+ */
+const bundleSubject = (name) => ({ kind: 'bundle', pkg: { name, installed: true, enabled: true, rows: [] } })
+const BUNDLE_SUBJECT = bundleSubject(BUNDLE)
 const panelProps = (subject) => ({ subject, t: undefined })
 const TIP_JAR = { slot: 'plugins.detail.section' }
 
@@ -787,14 +795,25 @@ ok(!textOf(emptyTree).includes('Support the author'), 'with every channel empty 
 // keeping the tip jar on the page it belongs to.
 const foreignTree = await mountPatched(clientJs, {
   ...TIP_JAR,
-  props: panelProps({ name: 'dsh-plugin-something-else', rows: [] }),
+  props: panelProps(bundleSubject('dsh-plugin-something-else')),
 })
 ok(foreignTree === null, 'the tip jar must render on no page but the bundle it belongs to')
+// The row page of the very skin it pays for: still not its page. "One level out" is
+// the whole point of the move.
 const rowTree = await mountPatched(clientJs, {
   ...TIP_JAR,
-  props: panelProps({ rowId: 'souls-hud', moduleName: 'dsh-plugin-souls-hud', enabled: true }),
+  props: panelProps({
+    kind: 'row',
+    pkg: { name: BUNDLE, installed: true, enabled: true, rows: [] },
+    row: { rowId: 'souls-hud', moduleName: 'dsh-plugin-souls-hud', enabled: true },
+  }),
 })
-ok(rowTree === null, 'and not on a row page either')
+ok(rowTree === null, 'and not on a row page either, not even its own skin\'s')
+const itemTree = await mountPatched(clientJs, {
+  ...TIP_JAR,
+  props: panelProps({ kind: 'item', id: 'some-official-plugin' }),
+})
+ok(itemTree === null, 'nor on an official plugin\'s page')
 
 // The shipped configuration: both channels on, one button each.
 const supportTree = await mountPatched(clientJs, { ...TIP_JAR, props: panelProps(BUNDLE_SUBJECT) })

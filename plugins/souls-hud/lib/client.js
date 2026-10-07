@@ -2392,11 +2392,29 @@ window.__ModuleLoader__.load({
         var t = function (key, params) {
           return translate(props, key, params);
         };
-        // A list slot is rendered on every detail page; this one belongs to the
-        // bundle's page only, so the subject decides. No hooks above this line, so
-        // returning early is safe.
+        // `plugins.detail.section` is a *list* rendered on every detail page, and the
+        // subject it is handed is the page's own reference — the shape the Plugins
+        // page builds in `ui-plugin-manager`:
+        //
+        //   bundle page:  { kind: "bundle", pkg: { name, version, installed, enabled, rows } }
+        //   row page:     { kind: "row", pkg: <the bundle>, row: { rowId, moduleName, enabled } }
+        //   official item:{ kind: "item", id }
+        //
+        // So the name lives at `subject.pkg.name`, and `kind` is what says which page
+        // this is. The tip jar belongs to the bundle's page and to no other — not even
+        // the row page of the very skin it pays for, because one level out was the
+        // point. (Getting this wrong renders nothing at all, silently: the first cut
+        // of this panel looked for `subject.name` and never appeared.)
         var subject = props && props.subject;
-        if (!subject || subject.name !== NAV_TARGET) return null;
+        var onBundlePage =
+          Boolean(subject) &&
+          subject.kind === "bundle" &&
+          Boolean(subject.pkg) &&
+          subject.pkg.name === NAV_TARGET;
+        if (!onBundlePage) return null;
+        if (window.console && console.info) {
+          console.info("[souls-hud] tip jar rendered for " + subject.pkg.name);
+        }
         var configured = (SUPPORT.channels || []).filter(function (channel) {
           if (!channel || !channel.id) return false;
           if (channel.kind === "link") return Boolean(channel.url);
@@ -2535,6 +2553,9 @@ window.__ModuleLoader__.load({
       var Panel = supportPanel(React);
       ctx.effect(function () {
         return ctx.slots.inject("plugins.detail.section", function () {
+          if (window.console && console.info) {
+            console.info("[souls-hud] tip jar registered on plugins.detail.section");
+          }
           return ctx.slots.register(
             {
               name: "plugins.detail.section",
