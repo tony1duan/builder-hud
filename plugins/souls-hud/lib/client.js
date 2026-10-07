@@ -94,29 +94,25 @@ window.__ModuleLoader__.load({
     var NAV_TARGET = "dsh-plugin-builder-hud";
 
     /**
-     * The one place that decides how this plugin can be supported.
+     * The one place that decides how this project can be supported.
      *
-     * The plugin is free and stays free: nothing here is a licence, and no feature
-     * anywhere in it is behind one. A link channel with an empty `url` — or a QR
-     * channel with an empty `file` — is *not shown*, so this ships with every
-     * channel off and the settings form grows its support section the moment one
-     * address is filled in.
+     * Two channels, because two is what it actually uses: the WeChat 赞赏码 for
+     * readers in China, Ko-fi for everyone else. The plugin is free and stays free —
+     * nothing here is a licence and no feature sits behind one — and a channel whose
+     * half is empty (`url` for a link, `file` for a code) is not rendered at all.
      *
-     * - `kind: "link"` — a page to open in a new tab (爱发电, GitHub Sponsors, …).
-     * - `kind: "qr"` — an image under `assets/support/`, which the host serves at
-     *   `/dsh-souls-hud/support/<file>`; the file name is exactly what goes here.
+     * - `kind: "qr"` — an image under `assets/support/`, served by the host at
+     *   `/dsh-souls-hud/support/<file>`; its button unfolds the code in place.
+     * - `kind: "link"` — a page to open in a new tab.
      *
-     * `id` is also the dictionary key (`support.<id>`), so adding a channel is one
-     * entry here and one pair of strings in `DICT` — and `test/harness.mjs` fails
-     * if the two disagree.
+     * `id` is also the dictionary key: `support.<id>` for the label and, for a code,
+     * `support.<id>.scan` for the app that can read it. Adding a channel is one entry
+     * here and its strings in `DICT`; `test/harness.mjs` fails if the two disagree.
      */
     var SUPPORT = {
       channels: [
-        { id: "afdian", kind: "link", url: "" },
-        { id: "github", kind: "link", url: "" },
-        { id: "kofi", kind: "link", url: "https://ko-fi.com/tonyhd" },
         { id: "wechat", kind: "qr", file: "wechat.png" },
-        { id: "alipay", kind: "qr", file: "" },
+        { id: "kofi", kind: "link", url: "https://ko-fi.com/tonyhd" },
       ],
     };
 
@@ -311,13 +307,9 @@ window.__ModuleLoader__.load({
         // A code is app-specific in a way a URL never is: the WeChat 赞赏码 cannot be
         // read by Alipay or by the camera app, so each channel says which app opens it.
         "support.qrOpen": "扫不出来时，点一下二维码打开原图，更好扫。",
-        "support.afdian": "爱发电",
-        "support.github": "GitHub Sponsors",
         "support.kofi": "Ko-fi",
         "support.wechat": "微信赞赏码",
         "support.wechat.scan": "只能微信扫一扫",
-        "support.alipay": "支付宝",
-        "support.alipay.scan": "只能支付宝扫一扫",
 
         // --- save status ------------------------------------------------------
         "status.saving": "保存中…",
@@ -496,13 +488,9 @@ window.__ModuleLoader__.load({
         "support.thanks": "If it has been useful, you can buy the author a coffee:",
         "support.qrHint": "scan to tip",
         "support.qrOpen": "If it will not scan, click the code to open the full-size image.",
-        "support.afdian": "Afdian",
-        "support.github": "GitHub Sponsors",
         "support.kofi": "Ko-fi",
         "support.wechat": "WeChat tip code",
         "support.wechat.scan": "WeChat app only",
-        "support.alipay": "Alipay",
-        "support.alipay.scan": "Alipay app only",
 
         // --- save status ------------------------------------------------------
         "status.saving": "Saving…",
@@ -877,6 +865,59 @@ window.__ModuleLoader__.load({
     }
 
     /**
+     * One string, from the app's seat when it is there and this plugin's table
+     * otherwise.
+     *
+     * At module scope because two surfaces need it: the row's settings form and the
+     * tip jar, which lives on the bundle's page. Both fall back to {@link DICT} rather
+     * than showing a key.
+     *
+     * @param props - the component's props, whose `t` is the app's seat.
+     * @param key - the dictionary key.
+     * @param params - values for `{placeholders}`, if any.
+     * @returns the translated string, or the key when nothing carries it.
+     */
+    function translate(props, key, params) {
+      if (props && typeof props.t === "function") {
+        try {
+          var translated = props.t(key, params);
+          if (typeof translated === "string" && translated !== "" && translated !== key) {
+            return translated;
+          }
+        } catch (error) {
+          // A broken seat is not worth failing a page over.
+        }
+      }
+      var table = browserDict();
+      var template = table[key] !== undefined ? table[key] : DICT.en[key];
+      if (typeof template !== "string") return key;
+      return params
+        ? template.replace(/\{(\w+)\}/g, function (match, name) {
+            return name in params ? String(params[name]) : match;
+          })
+        : template;
+    }
+
+    /**
+     * Which app reads a channel's code.
+     *
+     * A URL works in any browser; a payment code does not. The WeChat 赞赏码 is
+     * WeChat's own format — Alipay and the camera app cannot read it — which is a
+     * support question waiting to happen, so each QR channel carries its own
+     * `support.<id>.scan` line and the caption names the app. A channel without one
+     * falls back to the generic "scan to tip".
+     *
+     * @param t - the translate seat for the surface drawing it.
+     * @param id - the channel id.
+     * @returns the translated line, or the generic one when the channel has none.
+     */
+    function scanAppLine(t, id) {
+      var key = "support." + id + ".scan";
+      var translated = t(key);
+      return translated && translated !== key ? translated : t("support.qrHint");
+    }
+
+    /**
      * The plugin's own settings form, shown on its row in the Plugins page.
      *
      * The app's slot contract says the configuration of one row is keyed by
@@ -894,28 +935,6 @@ window.__ModuleLoader__.load({
     function settingsForm(React) {
       var CONFIG = BASE + "/config";
       var DEVICE_PATH = BASE + "/device.svg";
-
-      /** The app's seat when it is there, this plugin's table otherwise. */
-      function translate(props, key, params) {
-        if (props && typeof props.t === "function") {
-          try {
-            var translated = props.t(key, params);
-            if (typeof translated === "string" && translated !== "" && translated !== key) {
-              return translated;
-            }
-          } catch (error) {
-            // The form is not worth failing over a broken seat.
-          }
-        }
-        var table = browserDict();
-        var template = table[key] !== undefined ? table[key] : DICT.en[key];
-        if (typeof template !== "string") return key;
-        return params
-          ? template.replace(/\{(\w+)\}/g, function (match, name) {
-              return name in params ? String(params[name]) : match;
-            })
-          : template;
-      }
 
       /**
        * The form's look, in one place.
@@ -1001,41 +1020,11 @@ window.__ModuleLoader__.load({
       };
       var ERROR_INK = { color: "var(--dsw-alias-state-error-primary, #d24a43)" };
       /** A support channel: the same button, but it is a link, not an action. */
-      var linkStyle = Object.assign({}, buttonStyle, {
-        textDecoration: "none",
-        display: "inline-block",
-      });
-
       var DEVICES = ["whale", "hammer", "sword", "sun", "moon", "wolf", "custom"];
       var MATERIALS = ["bronze", "iron", "silver", "gold"];
       var SHAPES = ["round", "octagon"];
       /** How often the form re-reads the renderer's live burn number, ms. */
       var BURN_POLL_MS = 2000;
-
-      /**
-       * The support channels that are actually configured, split by how they are
-       * shown. A channel is configured when the half it needs is filled in — a
-       * `url` for a link, a `file` for a QR image — so an unfilled channel is
-       * invisible rather than broken, and the whole section is simply absent while
-       * none of them is set.
-       */
-      var SUPPORT_BASE = BASE + "/support/";
-      /**
-       * How large a payment code is drawn, in CSS pixels.
-       *
-       * 132 was the first cut and it is too small to scan a decorative code — the
-       * WeChat 赞赏码 is a dot ring, not a dense grid, and a phone needs it wider
-       * than a grid QR would. The tile is also a link to the full-size file, so this
-       * is the "sitting in front of the screen" size, not the only size.
-       */
-      var QR_SIZE = 200;
-      var supportLinks = [];
-      var supportCodes = [];
-      (SUPPORT.channels || []).forEach(function (channel) {
-        if (!channel || !channel.id) return;
-        if (channel.kind === "link" && channel.url) supportLinks.push(channel);
-        if (channel.kind === "qr" && channel.file) supportCodes.push(channel);
-      });
 
       /** A `HH:MM` clock time, as the host's tariff rule wants it. */
       var CLOCK = /^([01]?\d|2[0-3]):([0-5]\d)$/;
@@ -1081,23 +1070,6 @@ window.__ModuleLoader__.load({
         var view = props && props.view === "summary" ? "summary" : "page";
         var t = function (key, params) {
           return translate(props, key, params);
-        };
-        /**
-         * Which app reads a channel's code.
-         *
-         * A URL works in any browser; a payment code does not. The WeChat 赞赏码 is
-         * WeChat's own format — Alipay and the camera app cannot read it — which is a
-         * support question waiting to happen, so each QR channel carries its own
-         * `support.<id>.scan` line and the caption names the app. A channel without
-         * one falls back to the generic "scan to tip".
-         *
-         * @param id - the channel id.
-         * @returns the translated line, or the generic one when the channel has none.
-         */
-        var scanApp = function (id) {
-          var key = "support." + id + ".scan";
-          var translated = t(key);
-          return translated && translated !== key ? translated : t("support.qrHint");
         };
         var loaded = React.useState(null);
         var data = loaded[0];
@@ -1802,102 +1774,6 @@ window.__ModuleLoader__.load({
             )
           : React.createElement("div", { style: hintStyle }, t("preview.unavailable"));
 
-        /**
-         * The support section's body, or nothing at all.
-         *
-         * Built here rather than inline in `section(...)` so that the *section*
-         * only exists when there is something to put in it: an empty "support"
-         * heading would read as a missing feature rather than a choice, and a
-         * settings page is no place to advertise a tip jar nobody can use yet.
-         */
-        var supportBody =
-          supportLinks.length + supportCodes.length > 0
-            ? React.createElement(
-                "div",
-                {
-                  style: {
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "10px",
-                    paddingTop: "6px",
-                  },
-                },
-                React.createElement("div", { style: hintStyle }, t("support.thanks")),
-                supportLinks.length > 0
-                  ? React.createElement(
-                      "div",
-                      { style: { display: "flex", flexWrap: "wrap", gap: "8px" } },
-                      supportLinks.map(function (channel) {
-                        return React.createElement(
-                          "a",
-                          {
-                            key: channel.id,
-                            href: channel.url,
-                            target: "_blank",
-                            // Both, because `noreferrer` alone does not stop the
-                            // new document from reaching back through `window.opener`.
-                            rel: "noreferrer noopener",
-                            style: linkStyle,
-                          },
-                          t("support." + channel.id),
-                        );
-                      }),
-                    )
-                  : null,
-                supportCodes.length > 0
-                  ? React.createElement(
-                      "div",
-                      null,
-                      React.createElement(
-                        "div",
-                        { style: { display: "flex", flexWrap: "wrap", gap: "16px" } },
-                        supportCodes.map(function (channel) {
-                          // A payment code is meant to be scanned off a screen, and
-                          // this tile is small — so it is also a link to the file the
-                          // host serves, where the browser draws it at its own size.
-                          // That is the difference between a decoration and a code
-                          // someone can actually pay with.
-                          return React.createElement(
-                            "div",
-                            {
-                              key: channel.id,
-                              style: { display: "flex", flexDirection: "column", gap: "4px" },
-                            },
-                            React.createElement(
-                              "a",
-                              {
-                                href: SUPPORT_BASE + channel.file,
-                                target: "_blank",
-                                rel: "noreferrer noopener",
-                                title: t("support.qrOpen"),
-                                style: { display: "block", lineHeight: "0" },
-                              },
-                              React.createElement("img", {
-                                src: SUPPORT_BASE + channel.file,
-                                alt: t("support." + channel.id),
-                                width: QR_SIZE,
-                                height: QR_SIZE,
-                                style: {
-                                  display: "block",
-                                  borderRadius: "6px",
-                                  background: "#fff",
-                                },
-                              }),
-                            ),
-                            React.createElement(
-                              "div",
-                              { style: captionStyle },
-                              t("support." + channel.id) + " · " + scanApp(channel.id),
-                            ),
-                          );
-                        }),
-                      ),
-                      hintLine(t("support.qrOpen"), "support-qr-open"),
-                    )
-                  : null,
-              )
-            : null;
-
         return React.createElement(
           "div",
           { style: { paddingTop: "2px" } },
@@ -2301,13 +2177,6 @@ window.__ModuleLoader__.load({
             "burn",
           ),
 
-          // Last, and only when a channel is configured: the plugin's own tip jar.
-          // It changes nothing about the plugin — the promise above the sections
-          // says so — so it belongs at the bottom, after everything that does.
-          supportBody
-            ? section(t("section.support"), t("section.supportHint"), supportBody, "support")
-            : null,
-
           React.createElement(
             "div",
             { style: Object.assign({}, hintStyle, { minHeight: "18px", paddingTop: "10px" }) },
@@ -2422,7 +2291,208 @@ window.__ModuleLoader__.load({
     }
 
     /**
-     * Register the settings form against this plugin's row.
+     * The tip jar, as a surface of its own.
+     *
+     * It lives on the **bundle's** page — `plugins.detail.section` appears after a
+     * bundle's rows, after a row's configuration and after an official plugin's form
+     * alike — so it checks the subject it was handed and renders on BuilderHUD's page
+     * and nowhere else. One level out from the skin's settings form, on purpose: how
+     * to thank the author is a fact about the project rather than a setting of the
+     * skin, and a 200 px payment code parked under a form of sliders was the loudest
+     * thing on the page.
+     *
+     * Two buttons. Ko-fi is an ordinary link; WeChat unfolds its code in place with a
+     * `<details>`, the same disclosure the tariff rule uses, because a payment code is
+     * something you look at once. Both glyphs are drawn here rather than borrowed, the
+     * same rule the medallion follows.
+     *
+     * @param React - React, as the module loader supplies it.
+     * @returns the component.
+     */
+    function supportPanel(React) {
+      var SUPPORT_BASE = BASE + "/support/";
+      /**
+       * How large a payment code is drawn, in CSS pixels.
+       *
+       * 132 was the first cut and it is too small to scan a decorative code: the
+       * WeChat 赞赏码 is a dot ring, not a dense grid, and a phone needs it wider than
+       * a grid QR would. The code is also a link to the file itself, so this is the
+       * "sitting in front of the screen" size, not the only size.
+       */
+      var QR_SIZE = 200;
+
+      var TERTIARY = "var(--dsw-alias-label-tertiary, #8a8a8a)";
+      var RULE = "0.5px solid var(--dsw-alias-border-l2, rgba(128,128,128,0.25))";
+      var sectionStyle = { paddingTop: "16px", marginTop: "14px", borderTop: RULE };
+      var titleStyle = { fontSize: "13px", fontWeight: 700, letterSpacing: "0.2px" };
+      var descStyle = { fontSize: "12px", lineHeight: "18px", color: TERTIARY, marginTop: "2px" };
+      var captionStyle = { fontSize: "11px", lineHeight: "14px", color: TERTIARY };
+      var buttonStyle = {
+        font: "inherit",
+        fontSize: "12px",
+        padding: "5px 12px",
+        borderRadius: "6px",
+        border: "0.5px solid var(--dsw-alias-border-l2, rgba(128,128,128,0.35))",
+        background: "transparent",
+        color: "inherit",
+        cursor: "pointer",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+        textDecoration: "none",
+        width: "fit-content",
+      };
+      var summaryStyle = Object.assign({}, buttonStyle, { listStyle: "none" });
+      var iconStyle = { width: "14px", height: "14px", flex: "none" };
+
+      /** A scan frame: the action, not another company's logo. */
+      var scanIcon = function () {
+        return React.createElement(
+          "svg",
+          {
+            viewBox: "0 0 16 16",
+            style: iconStyle,
+            "aria-hidden": "true",
+            focusable: "false",
+            fill: "none",
+            stroke: "currentColor",
+            strokeWidth: "1.4",
+            strokeLinecap: "round",
+          },
+          React.createElement("path", { d: "M2.2 6V3.6c0-.8.6-1.4 1.4-1.4H6" }),
+          React.createElement("path", { d: "M10 2.2h2.4c.8 0 1.4.6 1.4 1.4V6" }),
+          React.createElement("path", { d: "M13.8 10v2.4c0 .8-.6 1.4-1.4 1.4H10" }),
+          React.createElement("path", { d: "M6 13.8H3.6c-.8 0-1.4-.6-1.4-1.4V10" }),
+          React.createElement("path", { d: "M5.4 8h5.2M5.4 10.4h2.6M10.6 10.4v2" }),
+        );
+      };
+
+      /** A cup: what the service is called, not what its logo looks like. */
+      var cupIcon = function () {
+        return React.createElement(
+          "svg",
+          {
+            viewBox: "0 0 16 16",
+            style: iconStyle,
+            "aria-hidden": "true",
+            focusable: "false",
+            fill: "none",
+            stroke: "currentColor",
+            strokeWidth: "1.4",
+            strokeLinecap: "round",
+            strokeLinejoin: "round",
+          },
+          React.createElement("path", { d: "M2.6 6.2h8.2v4.1a2.6 2.6 0 0 1-2.6 2.6H5.2a2.6 2.6 0 0 1-2.6-2.6z" }),
+          React.createElement("path", { d: "M10.8 7.2h1.1a1.7 1.7 0 0 1 0 3.4h-1.1" }),
+          React.createElement("path", { d: "M5 2.4v1.4M7.6 2.2v1.6" }),
+        );
+      };
+
+      return function SupportPanel(props) {
+        var t = function (key, params) {
+          return translate(props, key, params);
+        };
+        // A list slot is rendered on every detail page; this one belongs to the
+        // bundle's page only, so the subject decides. No hooks above this line, so
+        // returning early is safe.
+        var subject = props && props.subject;
+        if (!subject || subject.name !== NAV_TARGET) return null;
+        var configured = (SUPPORT.channels || []).filter(function (channel) {
+          if (!channel || !channel.id) return false;
+          if (channel.kind === "link") return Boolean(channel.url);
+          if (channel.kind === "qr") return Boolean(channel.file);
+          return false;
+        });
+        if (configured.length === 0) return null;
+
+        return React.createElement(
+          "section",
+          { style: sectionStyle, "data-dsh-support": "bundle" },
+          React.createElement("div", { style: titleStyle }, t("section.support")),
+          React.createElement("div", { style: descStyle }, t("section.supportHint")),
+          React.createElement(
+            "div",
+            {
+              style: {
+                display: "flex",
+                flexWrap: "wrap",
+                // The WeChat button owns the unfolded code, so the row is as tall as
+                // the code when it is open. `flex-start` keeps Ko-fi a button instead
+                // of stretching it into a column beside the image.
+                alignItems: "flex-start",
+                gap: "8px",
+                paddingTop: "10px",
+              },
+            },
+            configured.map(function (channel) {
+              if (channel.kind === "link") {
+                return React.createElement(
+                  "a",
+                  {
+                    key: channel.id,
+                    href: channel.url,
+                    target: "_blank",
+                    rel: "noreferrer noopener",
+                    style: buttonStyle,
+                  },
+                  channel.id === "kofi" ? cupIcon() : null,
+                  t("support." + channel.id),
+                );
+              }
+              var src = SUPPORT_BASE + channel.file;
+              return React.createElement(
+                "details",
+                { key: channel.id, style: { margin: 0 } },
+                React.createElement(
+                  "summary",
+                  { style: summaryStyle },
+                  scanIcon(),
+                  t("support." + channel.id),
+                ),
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "4px",
+                      paddingTop: "10px",
+                    },
+                  },
+                  React.createElement(
+                    "a",
+                    {
+                      href: src,
+                      target: "_blank",
+                      rel: "noreferrer noopener",
+                      title: t("support.qrOpen"),
+                      style: { display: "block", lineHeight: "0", width: QR_SIZE + "px" },
+                    },
+                    React.createElement("img", {
+                      src: src,
+                      alt: t("support." + channel.id),
+                      width: QR_SIZE,
+                      height: QR_SIZE,
+                      style: { display: "block", borderRadius: "6px", background: "#fff" },
+                    }),
+                  ),
+                  React.createElement(
+                    "div",
+                    { style: captionStyle },
+                    t("support." + channel.id) + " · " + scanAppLine(t, channel.id),
+                  ),
+                  React.createElement("div", { style: captionStyle }, t("support.qrOpen")),
+                ),
+              );
+            }),
+          ),
+        );
+      };
+    }
+
+    /**
+     * Register this plugin's surfaces: the row's settings form, and the tip jar on
+     * the bundle's page.
      *
      * @param ctx - the client Cordis context.
      * @param React - React, as the module loader supplies it.
@@ -2456,6 +2526,27 @@ window.__ModuleLoader__.load({
               if (typeof disposers[i] === "function") disposers[i]();
             }
           };
+        });
+      });
+
+      // The tip jar, one level out: the bundle's page rather than the row's form.
+      // `plugins.detail.section` is a *list* slot — an id and an order, no key — and
+      // the component filters itself by the subject it is handed.
+      var Panel = supportPanel(React);
+      ctx.effect(function () {
+        return ctx.slots.inject("plugins.detail.section", function () {
+          return ctx.slots.register(
+            {
+              name: "plugins.detail.section",
+              id: "builder-hud-support",
+              order: 100,
+              label: function () {
+                return translate(null, "section.support");
+              },
+              ...(hasLocale ? { locale: NS } : {}),
+            },
+            Panel,
+          );
         });
       });
     }

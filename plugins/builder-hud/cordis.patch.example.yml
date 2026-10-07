@@ -7,7 +7,7 @@
 #
 # The id has to match the bundle's own row (`souls-hud`): a different id inserts
 # a *second* row and the Plugins page's switch then toggles only one of them.
-# Point `name` at the Souls HUD package (not the BuilderHUD bundle): the row's
+# Point `name` at the Souls Style package (not the BuilderHUD bundle): the row's
 # own package is what supplies its name and its browser half.
 # When the package is installed as a bundle, this file is unnecessary — the
 # bundle's `cordis.patch.yml` already carries the row.
@@ -19,7 +19,7 @@
       name: "/absolute/path/to/plugins/souls-hud/lib/host.js"
       config:
         # CNY amount that fills each wallet bar (100%).
-        hpTargetCny: 50
+        hpTargetCny: 100
         fpTargetCny: 50
         # Browser poll interval and server-side balance cache, ms.
         pollMs: 15000

@@ -1,5 +1,5 @@
 /**
- * Generate this bundle's card artwork — `icon.svg` — from the Souls HUD renderer.
+ * Generate this bundle's card artwork — `icon.svg` — from the Souls Style renderer.
  *
  * The card's icon reaches the Plugins page as a base64 `data:` URI inside an
  * `<img src>`, so it is a **document of its own**: it must declare the SVG

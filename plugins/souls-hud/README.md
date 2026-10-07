@@ -1,4 +1,4 @@
-# Souls HUD
+# Souls Style
 
 A Dark Souls III style **covenant-medal** vitals cluster that replaces the DSH
 sidebar's brand row. It is the component this package provides; the
@@ -40,7 +40,7 @@ returns as its own setting, never as a side effect of picking a motif.
 | Thing | Name | Package |
 | --- | --- | --- |
 | The bundle (the card in the Plugins page) | **BuilderHUD** | [`dsh-plugin-builder-hud`](../builder-hud) |
-| The component (the row with the settings, and everything in this directory) | **Souls HUD** | `dsh-plugin-souls-hud` |
+| The component (the row with the settings, and everything in this directory) | **Souls Style** | `dsh-plugin-souls-hud` |
 
 The card's title comes from the package named in `dsh.profile.bundles`; the
 row's comes from the package the row's `name:` points at. Two titles therefore
@@ -342,7 +342,7 @@ Clicking the medallion (or pressing Enter on it) takes you to the cluster's own
 settings. It is keyboard-reachable (`role="button"`, `tabindex="0"`, a title and
 an `aria-label`), and it works the way the rest of this plugin navigates: the app
 owns the navigation, so the renderer clicks the sidebar's own **Plugins** entry and
-then scrolls to and briefly lights the row whose label is `Souls HUD`. When no
+then scrolls to and briefly lights the row whose label is `Souls Style`. When no
 Plugins entry can be found it does nothing rather than navigating somewhere that
 does not hold the settings.
 
@@ -489,7 +489,7 @@ Every key is optional; put it under the row's `config:`.
 
 | Key | Default | Meaning |
 | --- | --- | --- |
-| `hpTargetCny` | `50` | CNY amount that fills the **red** (topped-up) bar, 100% |
+| `hpTargetCny` | `100` | CNY amount that fills the **red** (topped-up) bar, 100% |
 | `fpTargetCny` | `50` | CNY amount that fills the **blue** (granted) bar, 100% |
 | `shape` | `round` | `round` (covenant medal) · `octagon` |
 | `device` | `whale` | `whale` · `hammer` · `sword` · `sun` · `moon` · `wolf` · `custom` |
@@ -568,7 +568,7 @@ profile can load it straight from an absolute path with one patch row. See
     - id: souls-hud
       name: "/absolute/path/to/plugins/souls-hud/lib/host.js"
       config:
-        hpTargetCny: 50
+        hpTargetCny: 100
         fpTargetCny: 50
         shape: round
         device: whale
@@ -674,7 +674,7 @@ the sidebar goes back to exactly what it looked like before the plugin existed.
   both halves are hidden with `visibility` (not `display`), which keeps the row's
   geometry available for anchoring;
 - the cluster then draws **its own mark** — the medallion — in the slot the
-  Souls HUD keeps its own emblem;
+  Souls Style keeps its own emblem;
 - the medallion is measured against the bars rather than sized by guesswork:
   its height is set to the bar container's, so the two always line up;
 - if the slot is absent, the mark falls back to the left-most laid-out
@@ -718,16 +718,17 @@ The harness covers the data path, the settings route (read, write, refusal, cap
 scaling, malformed JSON), the device route (store, serve, delete, and every
 refusal reason), the donation route (an image served byte-for-byte with
 `no-store`, and a path, an encoded path, a non-image and a missing file all
-refused), the icon's standalone rules, the `zh`/`en` dictionary parity, and the
-two regression guards for the rename: the retired DeepSeek whale path must not
-come back, and the dictionaries must not drift apart.
+refused), the icon's standalone rules, the `zh`/`en` dictionary parity, the defaults a fresh
+install draws (the whale on the covenant medal, a red bar that scales to ¥100), and
+the two regression guards: the retired DeepSeek whale path must not come back, and
+the dictionaries must not drift apart.
 
-`test/form.mjs` renders the real component against a React-compatible shim — no
-browser needed — and answers both questions from one run: what the page *says*
-(the assertions, and the free promise and tip jar in both states) and what it
-*looks like* (`preview/form.html`, plus `preview/form-support.html` with a channel
-configured, which is the one a reviewer wants since the shipped configuration
-shows no tip jar at all).
+`test/form.mjs` renders the real components against a React-compatible shim — no
+browser needed — and answers both questions from one run: what each surface *says*
+(the assertions, including the tip jar with both channels, with none, and against
+subjects that are not this bundle) and what it *looks like*
+(`preview/form.html` for the settings form, `preview/tip-jar.html` for the panel with
+its disclosure opened, and `preview/form-tariff.html` for the tariff rule unfolded).
 
 `test/upload.mjs` is the interesting one. The upload normalizer is browser code
 that cannot be reached from Node, so the test runs it where it lives and reads
@@ -804,17 +805,29 @@ If the HUD earns its place in your sidebar, here is the tip jar itself:
 
 ![微信赞赏码](./assets/support/wechat.png)
 
-Every channel lives in **one place**, `lib/client.js` — the WeChat 赞赏码 and
-Ko-fi are already on, the other three are empty and therefore invisible:
+**It lives on the BuilderHUD card's page, not in this skin's settings form.** The
+slot is `plugins.detail.section`, which the Plugins page renders after a bundle's
+rows, a row's configuration and an official plugin's form alike — the component
+checks the subject it was handed, so it appears on this bundle's page and nowhere
+else. That is one level out from the settings on purpose: how to thank the author is
+a fact about the project rather than a setting of the skin, and a 200 px payment code
+parked under a form of sliders was the loudest thing on the page.
+
+**Two buttons, each a glyph beside its label.** Ko-fi is an ordinary link that opens
+in a new tab. WeChat unfolds its code in place with a `<details>` — the same
+disclosure the tariff rule uses — because a payment code is something you look at
+once rather than something to park on a settings page. Both glyphs are drawn in
+`lib/client.js` rather than borrowed, the same rule the medallion follows: a scan
+frame for the code, a cup for Ko-fi, neither company's logo.
+
+Every channel lives in **one place**, `lib/client.js` — both are on, and a channel
+whose half is empty is invisible:
 
 ```js
 var SUPPORT = {
   channels: [
-    { id: "afdian", kind: "link", url: "" },          // a page to open
-    { id: "github", kind: "link", url: "" },
+    { id: "wechat", kind: "qr", file: "wechat.png" },          // unfolded in place
     { id: "kofi",   kind: "link", url: "https://ko-fi.com/tonyhd" },
-    { id: "wechat", kind: "qr", file: "wechat.png" }, // an image under assets/support/
-    { id: "alipay", kind: "qr", file: "" },
   ],
 };
 ```
@@ -827,29 +840,28 @@ var SUPPORT = {
   else, so the route cannot be walked out of its directory.
 - **A code is drawn at 200×200 and is also a link to the file itself.** A decorative
   code — the 赞赏码 is a ring of dots, not a grid — is not scannable at the 132 px
-  this section started with, so the tile was enlarged and made clickable: clicking
-  it opens `wechat.png` at its own 591 px in a new tab, which is the size a phone
-  actually needs. `test/form.mjs` asserts both.
+  this started with, so the tile was enlarged and made clickable: opening it shows
+  `wechat.png` at its own 591 px, which is the size a phone actually needs.
+  `test/form.mjs` asserts both.
 - **Every code names the app that can read it.** The caption is
   `label · support.<id>.scan`, so the WeChat tile reads *只能微信扫一扫 / WeChat app
   only*: a 赞赏码 is WeChat's own format, and Alipay or the camera app cannot read
   it. The line is required for every QR channel — `test/harness.mjs` fails without
-  it in either language — and the "if it will not scan, click the code" hint sits
-  under the row.
-- **An unfilled channel is not rendered at all.** With every channel empty the
-  settings page has no support section — an empty tip jar would read as a missing
-  feature. The free promise above the sections is on the page either way, because
-  that is the part that matters.
+  it in either language.
+- **An unfilled channel is not rendered at all.** With every channel empty the page
+  has no tip-jar section — an empty tip jar would read as a missing feature.
 - `id` doubles as the dictionary key `support.<id>`; `test/harness.mjs` fails when
   a channel has no label in either language, when a link is not `https://`, when a
   configured image is missing from `assets/support/`, or when a configured link is
   absent from `package.json`'s `funding`.
 
 The copy is deliberately blunt about the deal: **"A tip is a thank-you, not a
-purchase — it unlocks nothing."** `test/form.mjs` mounts the real component three
-times — shipped, one link plus one code, and every channel empty — and writes
-[`preview/form.html`](preview/form.html) (the shipped page, tip jar and all) and
-[`preview/form-support.html`](preview/form-support.html) (with a link channel too).
+purchase — it unlocks nothing."** `test/form.mjs` mounts the real component four
+times — the tip jar with both channels on, with every channel empty, and against two
+subjects that are not this bundle — and writes
+[`preview/tip-jar.html`](preview/tip-jar.html) (the panel, its disclosure opened) and
+[`preview/form.html`](preview/form.html) (the settings form, which no longer carries
+the tip jar at all).
 
 ### The metadata, once an address exists
 

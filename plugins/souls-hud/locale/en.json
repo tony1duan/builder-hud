@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Souls HUD",
+    "title": "Souls Style",
     "description": "Three equal status bars and an engraved badge, drawn in the sidebar brand row. The ring along the badge shows token burn rate, coloured by tariff window (peak 01:00–04:00 and 06:00–10:00 UTC, Monday to Friday, excluding Chinese public holidays)."
   }
 }

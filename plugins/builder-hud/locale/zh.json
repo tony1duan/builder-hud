@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "BuilderHUD",
-    "description": "侧边栏状态条的皮肤集合。内置 Souls HUD：三条《Dark Souls》风格的状态条，旁边是一枚雕刻徽章；徽章里的图形、金属材质和明暗两套外观都可以自己选，也可以上传自己的 SVG。"
+    "description": "侧边栏状态条的皮肤集合。内置 Souls Style：三条《Dark Souls》风格的状态条，旁边是一枚雕刻徽章；徽章里的图形、金属材质和明暗两套外观都可以自己选，也可以上传自己的 SVG。"
   }
 }

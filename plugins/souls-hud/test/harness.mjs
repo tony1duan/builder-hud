@@ -377,6 +377,24 @@ assert.equal(afterReset.newTokens, 150)
 
 assert.deepEqual(inject, ['webServer'])
 
+// --- what a fresh install draws ---------------------------------------------
+//
+// The defaults are a promise to whoever installs this: the whale, because that is
+// what the card artwork shows and what this project drew, and a red bar that scales
+// to ¥100 so a topped-up wallet reads as a fraction of a recharge rather than a
+// fraction of nothing. Read through the host's own `/config` route rather than from a
+// literal in the source, so a change anywhere along the chain is caught.
+
+{
+  const fresh = await mount({})
+  const config = (await fresh.state()).config
+  assert.equal(config.device, 'whale', 'a fresh install draws the whale, not another device')
+  assert.equal(config.shape, 'round', 'on the covenant medal, not the octagon')
+  assert.equal(config.material, 'bronze', 'cast in bronze')
+  assert.equal(config.hpTargetCny, 100, 'the red bar scales to ¥100')
+  assert.equal(config.fpTargetCny, 50, 'and the blue bar to ¥50')
+}
+
 // --- happy path -------------------------------------------------------------
 
 const primary = mount({ hpTargetCny: 50, fpTargetCny: 50, balanceCacheMs: 60000 })

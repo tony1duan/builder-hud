@@ -39,9 +39,10 @@ because breaking it cost something real.
    favicon path — or the word `favicon` — reappears in a shipped file. Data that is
    not ours (the holiday calendar) carries its licence and source in the README.
 6. **The free promise is not negotiable.** No feature may be gated, licensed or
-   sold. The tip jar at the bottom of the settings page is for users who want to
-   say thanks, and it unlocks nothing — `test/form.mjs` asserts the shipped page
-   shows exactly the channels that are configured, and nothing when none are.
+   sold. The tip jar on the bundle's page is for users who want to say thanks, and
+   it unlocks nothing — `test/form.mjs` asserts the panel shows exactly the channels
+   that are configured, nothing when none are, and nothing on any page but this
+   bundle's.
 
 ## Getting set up
 

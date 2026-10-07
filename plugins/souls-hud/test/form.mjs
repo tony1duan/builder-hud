@@ -36,7 +36,7 @@ const hudCss = readFileSync(new URL('../lib/hud.css', import.meta.url), 'utf8')
 /** The configuration the host would answer with. */
 const CONFIG = {
   numbers: 'hover',
-  hpTargetCny: 50,
+  hpTargetCny: 100,
   fpTargetCny: 50,
   staminaMode: 'remaining',
   device: 'whale',
@@ -409,6 +409,14 @@ function htmlOf(tree) {
     for (const name of ['href', 'src', 'alt', 'target', 'rel', 'title', 'width', 'height']) {
       if (props[name] !== undefined) attrs.push(` ${name}="${escape(String(props[name]))}"`)
     }
+    // SVG geometry too: without `d`, `viewBox`, `stroke` and the rest, the tip jar's
+    // glyphs render as nothing in the static page — and the page is what a reviewer
+    // looks at, so "it is only the preview" is not good enough.
+    for (const name of SVG_ATTRS) {
+      if (props[name] === undefined) continue
+      const attr = name === 'viewBox' ? 'viewBox' : kebab(name)
+      attrs.push(` ${attr}="${escape(String(props[name]))}"`)
+    }
     if (item.type === 'input') {
       attrs.push(` type="${props.type || 'text'}"`)
       if (props.defaultValue !== undefined) attrs.push(` value="${escape(String(props.defaultValue))}"`)
@@ -432,6 +440,13 @@ function htmlOf(tree) {
   return walk(tree)
 }
 
+/** The SVG attributes the static page has to carry through, with their JS spelling. */
+const SVG_ATTRS = [
+  'viewBox', 'fill', 'stroke', 'strokeWidth', 'strokeLinecap', 'strokeLinejoin',
+  'd', 'cx', 'cy', 'r', 'rx', 'ry', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'points',
+  'transform', 'aria-hidden', 'focusable', 'id',
+]
+
 const escape = (value) =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 const kebab = (key) => key.replace(/[A-Z]/g, (letter) => '-' + letter.toLowerCase())
@@ -445,23 +460,41 @@ globalThis.fetch = window.fetch
 const definition = loadClientHalf(window, React)
 if (!definition) throw new Error('form: the client half did not load')
 
-let captured = null
-const ctx = {
-  effect: (fn) => fn(),
-  slots: {
-    inject: (key, fn) => fn(),
-    register: (registration, component) => {
-      captured = { registration, component }
-      return () => {}
+/**
+ * Every registration the client half makes, by slot name.
+ *
+ * The plugin now fills two surfaces — the row's settings form (`plugins.row.config`,
+ * registered under two keys) and the tip jar (`plugins.detail.section`) — so keeping
+ * only the last capture would test whichever happened to run last.
+ */
+function captureRegistrations() {
+  const bySlot = new Map()
+  return {
+    bySlot,
+    ctx: {
+      effect: (fn) => fn(),
+      slots: {
+        inject: (key, fn) => fn(),
+        register: (registration, component) => {
+          if (!bySlot.has(registration.name)) bySlot.set(registration.name, { registration, component })
+          return () => {}
+        },
+      },
+      get: () => null,
+      fetch: window.fetch,
     },
-  },
-  get: () => null,
-  fetch: window.fetch,
+  }
 }
+
+const first = captureRegistrations()
+const ctx = first.ctx
 // The factory takes the module `require` and returns the module.
 const client = definition.factory((id) => (String(id) === 'react' ? React : {}))
 client.apply(ctx)
-if (!captured) throw new Error('form: the component was never registered')
+const captured = first.bySlot.get('plugins.row.config')
+if (!captured) throw new Error('form: the row configuration was never registered')
+const panelEntry = first.bySlot.get('plugins.detail.section')
+if (!panelEntry) throw new Error('form: the tip jar was never registered')
 
 // `client.js` closes over its own `window`; the renderer guard has to be visible
 // to it, so the shim's globals are installed for the component's lifetime.
@@ -537,7 +570,7 @@ for (const cut of [
 // The live read-outs: the reason a cap or a scale means anything.
 ok(flat.includes('Now: topped-up ¥31.40 · granted ¥12.75'), 'the bars section must print the live balances')
 ok(flat.includes('Now: 3.4k new tok/min'), 'the ring section must print the live rate')
-ok(flat.includes('Full at ¥50'), 'the red cap must say what makes it full')
+ok(flat.includes('Full at ¥100'), 'the red cap must say what makes it full')
 
 // The rule is the advanced half: reachable, but folded away.
 ok(flat.includes('Peak hours & holidays'), 'the rule needs a disclosure label')
@@ -672,44 +705,35 @@ function supportLiteral(source) {
 }
 
 /** The English label of each channel, as the dictionary spells it. */
-const SUPPORT_LABELS = {
-  afdian: 'Afdian',
-  github: 'GitHub Sponsors',
-  kofi: 'Ko-fi',
-  wechat: 'WeChat tip code',
-  alipay: 'Alipay',
-}
+const SUPPORT_LABELS = { wechat: 'WeChat tip code', kofi: 'Ko-fi' }
 const configured = (channel) =>
   Boolean((channel.kind === 'link' && channel.url) || (channel.kind === 'qr' && channel.file))
 
-const shippedChannels = supportLiteral(clientJs).channels
+// The row's settings form no longer carries the tip jar — that moved out to the
+// bundle's page — so the promise stays here and the buttons do not.
 ok(
   flat.includes('The plugin is free: no paid edition'),
-  'the page must say the plugin is free, whether or not a tip jar exists',
+  'the settings form must still say the plugin is free',
 )
-for (const channel of shippedChannels) {
-  const label = SUPPORT_LABELS[channel.id]
-  ok(label !== undefined, `the test knows a label for the ${channel.id} channel`)
-  ok(
-    flat.includes(label) === configured(channel),
-    `the shipped page must ${configured(channel) ? 'show' : 'hide'} the ${channel.id} channel`,
-  )
-}
+ok(
+  !flat.includes('Support the author'),
+  'the tip jar must not be inside the row, where a 200 px code drowned the settings',
+)
 
-/** Mount the real form from a patched copy of the client half. */
-async function mountPatched(source) {
+/** Mount one surface from a patched copy of the client half. */
+async function mountPatched(source, surface) {
   const win = fakeWindow()
   win.fetch = fakeFetch()
   const localReact = createReact()
   const definition = loadClientHalf(win, localReact, source)
   if (!definition) throw new Error('form: the patched client half did not load')
-  let registered = null
+  const bySlot = new Map()
   const localCtx = {
     effect: (fn) => fn(),
     slots: {
       inject: (key, fn) => fn(),
       register: (registration, component) => {
-        registered = { registration, component }
+        if (!bySlot.has(registration.name)) bySlot.set(registration.name, { registration, component })
         return () => {}
       },
     },
@@ -718,21 +742,27 @@ async function mountPatched(source) {
   }
   const client = definition.factory((id) => (String(id) === 'react' ? localReact : {}))
   client.apply(localCtx)
-  if (!registered) throw new Error('form: the patched component was never registered')
-  // `client.js` closes over its own `window`, so the shim's globals have to point
-  // at *this* window for the duration of the mount — and be put back afterwards,
-  // because the pages below render against the original one.
+  const entry = bySlot.get(surface.slot)
+  if (!entry) throw new Error(`form: ${surface.slot} was never registered`)
+  // `client.js` closes over its own `window`, so the shim's globals have to point at
+  // *this* window for the duration of the mount — and be put back afterwards, because
+  // the pages below render against the original one.
   const previousWindow = globalThis.window
   const previousFetch = globalThis.fetch
   globalThis.window = win
   globalThis.fetch = win.fetch
   try {
-    return await localReact.mount(registered.component, { view: 'page', t: undefined })
+    return await localReact.mount(entry.component, surface.props)
   } finally {
     globalThis.window = previousWindow
     globalThis.fetch = previousFetch
   }
 }
+
+const BUNDLE = 'dsh-plugin-builder-hud'
+const BUNDLE_SUBJECT = { name: BUNDLE, installed: true, enabled: true, rows: [] }
+const panelProps = (subject) => ({ subject, t: undefined })
+const TIP_JAR = { slot: 'plugins.detail.section' }
 
 // The fixtures patch the configuration by hand, so the shape they patch is asserted
 // first: a test whose patch quietly stopped matching would pass while testing the
@@ -744,55 +774,80 @@ const emptySource = clientJs
   .replace(/(\{ id: "[a-z]+", kind: "link", url: )"[^"]*"/g, '$1""')
   .replace(/(\{ id: "[a-z]+", kind: "qr", file: )"[^"]*"/g, '$1""')
 const richSource = clientJs
-  .replace(/(\{ id: "afdian", kind: "link", url: )"[^"]*"/, '$1"https://afdian.com/a/example"')
+  .replace(/(\{ id: "kofi", kind: "link", url: )"[^"]*"/, '$1"https://ko-fi.com/example"')
   .replace(/(\{ id: "wechat", kind: "qr", file: )"[^"]*"/, '$1"wechat.png"')
 
-// Every channel empty: no section, but the promise that matters is still there.
-const emptyTree = await mountPatched(emptySource)
-const emptyFlat = textOf(emptyTree)
-ok(!emptyFlat.includes('Support the author'), 'with every channel empty there is no tip-jar section at all')
-ok(emptyFlat.includes('The plugin is free'), 'and the free promise is on the page anyway')
+// Every channel empty: no section at all. A tip jar nobody can use reads as a missing
+// feature rather than a choice.
+const emptyTree = await mountPatched(emptySource, { ...TIP_JAR, props: panelProps(BUNDLE_SUBJECT) })
+ok(!textOf(emptyTree).includes('Support the author'), 'with every channel empty there is no tip jar')
 
-// One link channel and one QR channel — and, for the channels left empty, nothing.
-const supportTree = await mountPatched(richSource)
+// Somebody else's detail page. The slot is a *list* rendered on every detail page —
+// a bundle's, a row's, an official plugin's — so the subject is the only thing
+// keeping the tip jar on the page it belongs to.
+const foreignTree = await mountPatched(clientJs, {
+  ...TIP_JAR,
+  props: panelProps({ name: 'dsh-plugin-something-else', rows: [] }),
+})
+ok(foreignTree === null, 'the tip jar must render on no page but the bundle it belongs to')
+const rowTree = await mountPatched(clientJs, {
+  ...TIP_JAR,
+  props: panelProps({ rowId: 'souls-hud', moduleName: 'dsh-plugin-souls-hud', enabled: true }),
+})
+ok(rowTree === null, 'and not on a row page either')
+
+// The shipped configuration: both channels on, one button each.
+const supportTree = await mountPatched(clientJs, { ...TIP_JAR, props: panelProps(BUNDLE_SUBJECT) })
 const supportHtml = htmlOf(supportTree)
 const supportFlat = textOf(supportTree)
-const richChannels = supportLiteral(richSource).channels
-ok(supportFlat.includes('Support the author'), 'a configured tip jar gets its section')
-ok(supportFlat.includes('If it has been useful'), 'and says what the money is for')
-for (const channel of richChannels) {
+const shippedChannels = supportLiteral(clientJs).channels
+ok(supportFlat.includes('Support the author'), 'the tip jar gets its own section')
+ok(supportFlat.includes('A tip is a thank-you'), 'and says what the money is')
+for (const channel of shippedChannels) {
   ok(
     supportFlat.includes(SUPPORT_LABELS[channel.id]) === configured(channel),
-    `the configured page must ${configured(channel) ? 'show' : 'hide'} the ${channel.id} channel`,
+    `the tip jar must ${configured(channel) ? 'show' : 'hide'} the ${channel.id} channel`,
   )
 }
-ok(supportHtml.includes('href="https://afdian.com/a/example"'), 'a link channel is a real link')
+
+// Ko-fi: one link, with a glyph beside its label.
+const kofiAt = supportHtml.indexOf('href="https://ko-fi.com/tonyhd"')
+ok(kofiAt !== -1, 'the Ko-fi button is a real link')
+const kofiMarkup = supportHtml.slice(kofiAt, supportHtml.indexOf('</a>', kofiAt))
+ok(kofiMarkup.includes('<svg'), 'the Ko-fi button carries its own glyph')
+ok(kofiMarkup.includes('Ko-fi'), 'beside its label')
 ok(
   supportHtml.includes('target="_blank"') && supportHtml.includes('rel="noreferrer noopener"'),
   'and it opens in a new tab, without handing over the opener',
 )
+
+// WeChat: a disclosure, not a parked image — the code is what you open when you mean
+// to pay, so it stays out of the page until then.
+ok(supportHtml.includes('<details'), 'the WeChat button unfolds instead of parking a code')
+const detailsAt = supportHtml.indexOf('<details')
+const summaryAt = supportHtml.indexOf('<summary', detailsAt)
+const imgAt = supportHtml.indexOf('<img', detailsAt)
+ok(summaryAt !== -1, 'the disclosure is the button')
+ok(imgAt > summaryAt, 'and the code lives inside it, after the summary')
 ok(
   supportHtml.includes('src="/dsh-souls-hud/support/wechat.png"'),
-  'a QR channel points at the host route that serves it',
+  'the code points at the host route that serves it',
 )
-ok(supportHtml.includes('alt="WeChat tip code"'), 'the code carries an alt: a QR image is unreadable to a screen reader')
-// 132 px was the first cut and it is too small to scan a decorative code, so the
-// size is asserted — and the tile links to the file the host serves, which is the
-// size that actually works when a phone is pointed at it.
+ok(supportHtml.includes('alt="WeChat tip code"'), 'the code carries an alt: a QR is unreadable to a screen reader')
 ok(supportHtml.includes('width="200"') && supportHtml.includes('height="200"'), 'the code is drawn at a scannable size')
 ok(
   supportHtml.includes('href="/dsh-souls-hud/support/wechat.png"'),
   'and the code itself links to the full-size image',
 )
-ok(supportFlat.includes('If it will not scan, click the code to open the full-size image'), 'with a line saying so')
-// A code is app-specific: the caption has to name the app that can read it, or the
-// supporter points Alipay (or the camera) at the WeChat 赞赏码 and nothing happens.
-const SUPPORT_SCAN = { wechat: 'WeChat app only', alipay: 'Alipay app only' }
-for (const channel of richChannels.filter((one) => one.kind === 'qr' && one.file)) {
-  ok(supportFlat.includes(SUPPORT_SCAN[channel.id]), `the ${channel.id} code must name the app that reads it`)
-}
-// The free promise stays, configured or not: it is the point of the section.
-ok(supportFlat.includes('The plugin is free'), 'the promise is on the page in every state')
+ok(supportFlat.includes('WeChat app only'), 'the caption names the only app that can read it')
+ok(supportFlat.includes('If it will not scan'), 'with a line for when it will not scan')
+
+// The fixture, with the address changed: the same two buttons, the fixture's link, and
+// nothing of the shipped one.
+const richTree = await mountPatched(richSource, { ...TIP_JAR, props: panelProps(BUNDLE_SUBJECT) })
+const richHtml = htmlOf(richTree)
+ok(richHtml.includes('href="https://ko-fi.com/example"'), 'the fixture link is the one rendered')
+ok(!richHtml.includes('tonyhd'), 'and the shipped address is not')
 
 // --- write the static page, so a human can look at the same tree ----------------
 
@@ -813,7 +868,7 @@ const formHtml = `<!doctype html>
 ${hudCss}
 </style></head>
 <body>
-<div class="page-title">Souls HUD</div>
+<div class="page-title">Souls Style</div>
 <div class="page-kind">the row's settings page, as the component renders it</div>
 <div id="form">${htmlOf(page)}</div>
 </body></html>
@@ -840,13 +895,30 @@ const staticPage = (html) => html.split('/dsh-souls-hud/support/wechat.png').joi
 
 writeFileSync(new URL('../preview/form.html', import.meta.url), staticPage(formHtml))
 
-// A second page with one *link* channel added, which the shipped configuration does
-// not have: a page nobody can open is not a page a human can review.
-writeFileSync(
-  new URL('../preview/form-support.html', import.meta.url),
-  staticPage(formHtml.replace(htmlOf(page), supportHtml)),
-)
-console.log('form: preview/form.html and preview/form-support.html carry the tip jar')
+// The tip jar has its own surface now, so it gets its own page — the row form above no
+// longer carries it at all. Its disclosure is opened in the static page, because a
+// reviewer who has to click to see the code is not reviewing the code.
+const panelHtml = `<!doctype html>
+<html><head><meta charset="utf-8"><title>BuilderHUD — the tip jar</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 20px 24px; font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+         background: #1c1c1e; color: #ededed;
+         --dsw-alias-bg-module-platform: rgba(255,255,255,0.06);
+         --dsw-alias-border-l2: rgba(255,255,255,0.16);
+         --dsw-alias-label-tertiary: #9a9a9a; }
+  #panel { max-width: 470px; }
+  .page-title { font-size: 15px; font-weight: 700; }
+  .page-kind { font-size: 12px; color: var(--dsw-alias-label-tertiary); margin-bottom: 4px; }
+</style></head>
+<body>
+<div class="page-title">BuilderHUD</div>
+<div class="page-kind">the bundle's page, as the tip jar renders on it</div>
+<div id="panel">${staticPage(htmlOf(supportTree)).replace('<details', '<details open')}</div>
+</body></html>
+`
+writeFileSync(new URL('../preview/tip-jar.html', import.meta.url), panelHtml)
+console.log('form: preview/form.html and preview/tip-jar.html written')
 
 // A second page with the rule *changed*, because the section folds itself away
 // while the rule is the published one — and a page nobody can open is not a page

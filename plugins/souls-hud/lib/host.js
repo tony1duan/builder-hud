@@ -1,5 +1,5 @@
 /**
- * BuilderHUD — host half. Ships the Souls HUD.
+ * BuilderHUD — host half. Ships Souls Style.
  *
  * Renders a Dark Souls style HUD in the top-left of the DSH GUI:
  *
@@ -64,7 +64,7 @@ const DEVICE_LIMIT_BYTES = 64 * 1024
 
 const DEFAULTS = {
   /** CNY amount mapped to 100% on the HP (topped-up) bar. */
-  hpTargetCny: 50,
+  hpTargetCny: 100,
   /** CNY amount mapped to 100% on the FP (granted/bonus) bar. */
   fpTargetCny: 50,
   /** Browser poll interval, ms. */

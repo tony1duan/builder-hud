@@ -1,7 +1,7 @@
 # BuilderHUD
 
 A bundle of customizable vitals-cluster skins for the DSH sidebar. It ships one:
-the [**Souls HUD**](../souls-hud) — three Dark Souls style bars beside an
+the [**Souls Style**](../souls-hud) — three Dark Souls style bars beside an
 engraved covenant medallion whose shape, device, metal and light/dark cut are all
 settings, and whose edge doubles as a token-burn gauge.
 
@@ -23,7 +23,7 @@ the patch layer that puts a row on it.
 There is no runtime code here on purpose. The name on the card comes from the
 package listed in `dsh.profile.bundles`, and the name on the row comes from the
 package the row points at — so two names need two packages. See
-[the Souls HUD README](../souls-hud#the-names-and-why-there-are-two-packages)
+[the Souls Style README](../souls-hud#the-names-and-why-there-are-two-packages)
 for the load-bearing reason (a subpath row silently loses its browser half).
 
 ## Installing
@@ -43,7 +43,7 @@ The profile lists this bundle, and this bundle depends on the skin:
 }
 ```
 
-`pnpm add dsh-plugin-builder-hud` in the profile brings the Souls HUD in with it.
+`pnpm add dsh-plugin-builder-hud` in the profile brings the Souls Style in with it.
 The profile's own `cordis.patch.yml` then carries only the switch's state:
 
 ```yaml
@@ -84,12 +84,13 @@ Both packages are free — the bundle and the skin. There is no paid edition, no
 licence key, and no feature to unlock, and the settings page says so in as many
 words; the donations exist to pay for maintenance, not to open a door.
 
-If the HUD earns its place in your sidebar, the channels are configured in one
-place and documented in [the Souls HUD README](../souls-hud#support): link
-channels (爱发电, GitHub Sponsors, Ko-fi) and QR codes for WeChat and Alipay,
-drawn at the bottom of the plugin's own settings page — and only when they are
-actually filled in, so a checkout that has not been given an address shows no tip
-jar at all. The same section lists the two metadata fields (npm's `funding`,
+If the HUD earns its place in your sidebar, the tip jar is on **this bundle's
+card page** — the skin registers it into `plugins.detail.section`, so it sits one
+level out from the row's settings. Two buttons, each a glyph beside its label:
+WeChat unfolds its code in place, Ko-fi opens in a new tab. Both are configured in
+one place and documented in [the Souls Style README](../souls-hud#support), and an
+unfilled channel is not rendered at all, so a checkout that has not been given an
+address shows no tip jar. The same section lists the two metadata fields (npm's `funding`,
 `.github/FUNDING.yml`) that make a channel findable once there is one; this
 package's `package.json` can carry the same `funding` field as the skin.
 

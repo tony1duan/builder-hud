@@ -1,4 +1,4 @@
-# The BuilderHUD bundle patch: one row, the Souls HUD.
+# The BuilderHUD bundle patch: one row: Souls Style.
 #
 # A bundle's patch is composed onto the profile root before the user's
 # cordis.patch.yml, and rows are addressed by id with the last write winning —
@@ -8,7 +8,7 @@
 # The row's `name` is a **separate package**, `dsh-plugin-souls-hud`, and that
 # is load-bearing rather than cosmetic:
 #
-#   - its own `locale/` directory is what gives the row the name "Souls HUD"
+#   - its own `locale/` directory is what gives the row the name "Souls Style"
 #     while this bundle's card stays "BuilderHUD";
 #   - `dsh-client-modules` discovers a browser half only for an *exact* package
 #     specifier (`exactPackageSpecifier` rejects anything containing "/"), so a
@@ -26,7 +26,7 @@
         # CNY amount that fills each wallet bar (100%). One cap per bar: the
         # topped-up wallet and the granted wallet are spent differently, so they
         # do not have to share a scale.
-        hpTargetCny: 50
+        hpTargetCny: 100
         fpTargetCny: 50
         # Browser poll interval and server-side balance cache, ms.
         pollMs: 15000

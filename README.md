@@ -1,7 +1,7 @@
 # BuilderHUD
 
-Customizable vitals-cluster skins for the DSH sidebar. It ships one: the
-**Souls HUD** — three Dark Souls style bars beside an engraved covenant medallion
+Customizable vitals-cluster skins for the DSH sidebar. It ships one:
+**Souls Style** — three Dark Souls style bars beside an engraved covenant medallion
 whose shape, device, metal and light/dark cut are all settings, and whose edge
 doubles as a token-burn gauge.
 
@@ -29,7 +29,7 @@ holidays and 调休 make-up workdays.
 There is no runtime code in the bundle on purpose, and the reason is load-bearing:
 the name on the card comes from the package listed in `dsh.profile.bundles`, the
 name on the row comes from the package the row points at — so two names need two
-packages. [The Souls HUD README](plugins/souls-hud/README.md) is the real
+packages. [The Souls Style README](plugins/souls-hud/README.md) is the real
 documentation: installation, every setting, the artwork, the tariff rule, the
 holiday calendar and the test suite. Start there.
 
@@ -43,7 +43,7 @@ From a checkout, point one row at the skin's host entry in your profile's
     - id: souls-hud
       name: "/absolute/path/to/plugins/souls-hud/lib/host.js"
       config:
-        hpTargetCny: 50
+        hpTargetCny: 100
         fpTargetCny: 50
         shape: round
         device: whale
@@ -52,7 +52,7 @@ From a checkout, point one row at the skin's host entry in your profile's
 
 Full instructions — including the two-package layout and why the row must not be
 repeated in the profile layer — are in
-[the Souls HUD README](plugins/souls-hud/README.md#installation).
+[the Souls Style README](plugins/souls-hud/README.md#installation).
 
 ## Verifying
 
@@ -72,8 +72,9 @@ browser-side tests, a local Chrome.
 ## Support
 
 The plugin is free, and there is no paid edition, no licence key and no feature to
-unlock; the settings page says so in as many words. If it earns its place in your
-sidebar, the tip jar sits at the bottom of the plugin's own settings page:
+unlock; the settings form says so in as many words. If it earns its place in your
+sidebar, the tip jar sits on **BuilderHUD's own page** — one level out from the
+skin's settings, where it was drowning them:
 
 ![微信赞赏码](plugins/souls-hud/assets/support/wechat.png)
 
@@ -82,7 +83,8 @@ is the only app that can read it. Everywhere else, there is
 **[Ko-fi](https://ko-fi.com/tonyhd)**; both are offered from the plugin's settings
 page too, as soon as one is open.
 
-Channels live in one place (`SUPPORT` in
+Both are buttons with a glyph: WeChat unfolds its code in place, Ko-fi opens in a
+new tab. Channels live in one place (`SUPPORT` in
 [`plugins/souls-hud/lib/client.js`](plugins/souls-hud/lib/client.js)) and an
 unconfigured channel is not rendered at all. See
 [the Support section](plugins/souls-hud/README.md#support) for how to fill one in.

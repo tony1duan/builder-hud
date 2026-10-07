@@ -1,5 +1,5 @@
 /* ============================================================================
- * BuilderHUD — the Souls HUD renderer.
+ * BuilderHUD — the Souls Style renderer.
  *
  * Plain script, no module system: it is pulled into index.html by the host
  * half's `tapIndex` transform, and loaded on demand by `lib/client.js` when the
@@ -466,7 +466,7 @@
    * @returns the row element, or null.
    */
   function findOwnPluginRow() {
-    var labels = ["Souls HUD", "BuilderHUD"];
+    var labels = ["Souls Style", "BuilderHUD"];
     var nodes = document.querySelectorAll("div,section,li,tr,article");
     for (var i = 0; i < nodes.length; i += 1) {
       var node = nodes[i];
@@ -1278,7 +1278,7 @@
     // which is right: it is a picture.
 
     // The mark the cluster shows in place of the app's own brand row: an
-    // engraved octagonal medallion in the Souls HUD's own emblem slot. Its frame
+    // engraved octagonal medallion in the skin's own emblem slot. Its frame
     // is fixed; the device inside it and the metal it is cast from are settings.
     mark = document.createElement("span");
     mark.className = "dsh-sh__mark";

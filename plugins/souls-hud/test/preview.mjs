@@ -320,7 +320,7 @@ const html = `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Souls HUD preview</title>
+<title>Souls Style preview</title>
 <style>${css}</style>
 <style>
   html, body { margin: 0; height: 100%; }

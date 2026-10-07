@@ -15,9 +15,10 @@ var SUPPORT = {
 };
 ```
 
-The settings form then shows it under **支持作者 / Support the author**, at the
-bottom of the plugin's own page. Until a `file` is filled in, that channel is not
-rendered — an empty tip jar is worse than no tip jar.
+**BuilderHUD's card page** then shows it, under **支持作者 / Support the author**:
+the code is not on screen until its button is opened, because that page is where the
+project is described rather than configured. Until a `file` is filled in, that
+channel is not rendered — an empty tip jar is worse than no tip jar.
 
 Every code says **which app can read it**: the caption comes from
 `support.<id>.scan` in the dictionary (`"只能微信扫一扫"` / `"WeChat app only"`),
