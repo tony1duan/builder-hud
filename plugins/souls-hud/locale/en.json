@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Souls Style",
-    "description": "Three equal status bars and an engraved badge, drawn in the sidebar brand row. The ring along the badge shows token burn rate, coloured by tariff window (peak 01:00–04:00 and 06:00–10:00 UTC, Monday to Friday, excluding Chinese public holidays)."
+    "description": "Three action-RPG style bars show the remaining top-up balance (red), the granted balance (blue) and the context still available (green). The medallion reads hot in peak hours and cool off-peak, and the burn ring along its edge shows the token burn rate of the current session."
   }
 }

@@ -2,7 +2,7 @@
   "name": "dsh-plugin-builder-hud",
   "version": "0.4.0",
   "private": true,
-  "description": "BuilderHUD — a bundle of customizable vitals-cluster skins for the DSH sidebar. It ships Souls Style.",
+  "description": "BuilderHUD — vitals-cluster skins for the DSH sidebar.",
   "type": "module",
   "exports": {
     "./package.json": "./package.json",
