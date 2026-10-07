@@ -882,6 +882,41 @@ assert.ok(hudJs.includes('/state.json'), 'renderer must poll the state route')
   }
 }
 
+// --- the light behind the metal moves, and the fractures keep the ring's colour --
+//
+// Two things that would still *look* like something if they broke, which is why they
+// are asserted rather than trusted: a flow whose stops move a property nothing paints,
+// and a lit fracture glowing a colour of its own invention.
+{
+  // The drift has to move `stop-opacity`. Animating `opacity` there would animate the
+  // stop *elements*, which are never rendered: the gradient would sit still and the
+  // effect would simply be absent, with no error anywhere. That the drift, the stagger
+  // and the painted result agree is `test/upload.mjs`'s job — it reads nine stops with
+  // nine different delays off the real thing.
+  const drift = /@keyframes\s+dsh-sh-drift\s*\{([\s\S]*?)\n\}/.exec(hudCss)
+  assert.ok(drift, 'hud.css must define the flow drift')
+  assert.ok(
+    /stop-opacity\s*:/.test(drift[1]),
+    'the drift must move stop-opacity: animating opacity would move the stops themselves, which paint nothing',
+  )
+  assert.ok(
+    /\.dsh-sh__flow\s*\{[^}]*animation\s*:\s*dsh-sh-drift/.test(hudCss.replace(/\/\*[\s\S]*?\*\//g, '')),
+    'the flow stops must carry the drift animation',
+  )
+  // A lit fracture takes its colour from the same custom properties the ring uses,
+  // which is the only reason the two cannot drift apart as the tariff changes.
+  for (const layer of ['halo', 'band']) {
+    assert.ok(
+      new RegExp(`\\.dsh-sh__crack-${layer}\\s*\\{[^}]*stroke:\\s*var\\(--dsh-sh-band`).test(hudCss),
+      `a lit fracture's ${layer} must stroke var(--dsh-sh-band), the ring's own colour`,
+    )
+  }
+  assert.ok(
+    /\.dsh-sh__crack-core\s*\{[^}]*stroke:\s*var\(--dsh-sh-core/.test(hudCss),
+    "a lit fracture's core must stroke var(--dsh-sh-core), the ring's own core",
+  )
+}
+
 // --- the settings text is globalized, and the two dictionaries agree ---------
 //
 // The settings form's copy lives in `lib/client.js` as one table with a `zh` and

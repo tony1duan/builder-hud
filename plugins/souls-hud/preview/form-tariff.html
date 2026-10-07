@@ -136,7 +136,7 @@
   --dsh-sh-metal-4: #2b2009;
   --dsh-sh-field: #efe6cf;
   --dsh-sh-lip: rgba(255, 245, 220, 0.5);
-  --dsh-sh-crack: rgba(36, 24, 8, 0.46);
+  --dsh-sh-crack: rgba(88, 22, 10, 0.5);
   --dsh-sh-pit: rgba(110, 86, 46, 0.4);
 }
 
@@ -151,7 +151,7 @@
   --dsh-sh-metal-4: #1b2630;
   --dsh-sh-field: #dde7f0;
   --dsh-sh-lip: rgba(230, 242, 252, 0.52);
-  --dsh-sh-crack: rgba(58, 80, 102, 0.42);
+  --dsh-sh-crack: rgba(74, 30, 30, 0.44);
   --dsh-sh-pit: rgba(44, 66, 88, 0.4);
 }
 
@@ -164,7 +164,7 @@
   --dsh-sh-metal-4: #333c44;
   --dsh-sh-field: #e9eef3;
   --dsh-sh-lip: rgba(255, 255, 255, 0.62);
-  --dsh-sh-crack: rgba(38, 28, 12, 0.34);
+  --dsh-sh-crack: rgba(92, 28, 20, 0.4);
   --dsh-sh-pit: rgba(48, 36, 16, 0.34);
 }
 
@@ -177,7 +177,7 @@
   --dsh-sh-metal-4: #43310a;
   --dsh-sh-field: #f4ecd0;
   --dsh-sh-lip: rgba(255, 250, 225, 0.55);
-  --dsh-sh-crack: rgba(34, 22, 6, 0.46);
+  --dsh-sh-crack: rgba(84, 20, 8, 0.48);
   --dsh-sh-pit: rgba(40, 26, 8, 0.44);
 }
 
@@ -193,7 +193,7 @@
   --dsh-sh-metal-4: #170f03;
   --dsh-sh-field: #322817;
   --dsh-sh-lip: rgba(255, 236, 196, 0.28);
-  --dsh-sh-crack: rgba(0, 0, 0, 0.58);
+  --dsh-sh-crack: rgba(56, 10, 6, 0.6);
   --dsh-sh-pit: rgba(0, 0, 0, 0.44);
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
 }
@@ -205,7 +205,7 @@
   --dsh-sh-metal-4: #101a21;
   --dsh-sh-field: #1f2c39;
   --dsh-sh-lip: rgba(210, 232, 250, 0.26);
-  --dsh-sh-crack: rgba(0, 0, 0, 0.44);
+  --dsh-sh-crack: rgba(46, 12, 14, 0.52);
   --dsh-sh-pit: rgba(132, 160, 186, 0.32);
 }
 [data-ds-dark-theme] .dsh-sh__mark:not([data-cut="light"])[data-material="silver"] {
@@ -216,7 +216,7 @@
   --dsh-sh-metal-4: #1f262c;
   --dsh-sh-field: #242c33;
   --dsh-sh-lip: rgba(232, 242, 250, 0.26);
-  --dsh-sh-crack: rgba(0, 0, 0, 0.5);
+  --dsh-sh-crack: rgba(52, 12, 10, 0.56);
   --dsh-sh-pit: rgba(0, 0, 0, 0.38);
 }
 [data-ds-dark-theme] .dsh-sh__mark:not([data-cut="light"])[data-material="gold"] {
@@ -227,7 +227,7 @@
   --dsh-sh-metal-4: #1f1704;
   --dsh-sh-field: #332a13;
   --dsh-sh-lip: rgba(255, 238, 180, 0.26);
-  --dsh-sh-crack: rgba(0, 0, 0, 0.58);
+  --dsh-sh-crack: rgba(58, 12, 6, 0.62);
   --dsh-sh-pit: rgba(0, 0, 0, 0.44);
 }
 
@@ -297,37 +297,81 @@
 .dsh-sh__mark .dsh-sh__heat-field {
   opacity: var(--dsh-sh-heat-scale, 1);
 }
-/* Firelight in the fractures: a wide dim pass, then a narrow bright core. Two
-   strokes rather than a blur, for the same reason the rim's shadow is two: a
-   filter would need an id, and ids have to be re-pointed in the preview. */
-.dsh-sh__mark .dsh-sh__heat-ember,
-.dsh-sh__mark .dsh-sh__heat-glow,
-.dsh-sh__mark .dsh-sh__heat-core,
-.dsh-sh__mark .dsh-sh__heat-flare {
+/* Firelight in the fractures.
+ *
+ * The fractures are no longer a property of the tariff window. They are lit by the
+ * arc, one group per crack, and `data-lit` is the whole interface: `paintGauge` sets
+ * it on the cracks the sweep has reached and everything below follows from that. The
+ * passes are the ring's own stack, scaled up, so a lit fracture is unmistakably the
+ * same light as the arc that lit it:
+ *
+ *   halo   wide and dim, past the crack on both sides — light coming *out* of it
+ *   band   the tariff colour, from `--dsh-sh-band`, which is why a lit crack and the
+ *          ring cannot drift apart
+ *   flow   the shared drifting gradient, so the brightness inside travels
+ *   core   the near-white centre
+ *   flare  the specular line inside that
+ *
+ * Nothing here is per-frame work: one attribute per fracture per poll, and the
+ * transition below does the coming and going.
+ */
+.dsh-sh__mark .dsh-sh__crack {
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+.dsh-sh__mark .dsh-sh__crack[data-lit="1"] {
+  opacity: 0.62;
+  /* The bloom on the metal around a lit crack. A filter *is* allowed here, unlike in
+     the two-stroke passes: the id problem those avoid is about gradients shared
+     between marks, and this shadows nothing but its own subtree. */
+  filter: drop-shadow(0 0 1.4px var(--dsh-sh-spark));
+}
+/* The burn level decides how much of it there is, exactly as it does for the arc. */
+.dsh-sh__mark[data-burn="2"] .dsh-sh__crack[data-lit="1"] {
+  opacity: 0.76;
+}
+.dsh-sh__mark[data-burn="3"] .dsh-sh__crack[data-lit="1"] {
+  opacity: 0.9;
+}
+.dsh-sh__mark[data-burn="4"] .dsh-sh__crack[data-lit="1"] {
+  opacity: 1;
+}
+.dsh-sh__mark .dsh-sh__crack-halo,
+.dsh-sh__mark .dsh-sh__crack-band,
+.dsh-sh__mark .dsh-sh__crack-flow,
+.dsh-sh__mark .dsh-sh__crack-core,
+.dsh-sh__mark .dsh-sh__crack-flare {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-/* Cooling metal around the fissure: wide and dim, and red — the outside of lava
-   is where it has already begun to cool. */
-.dsh-sh__mark .dsh-sh__heat-ember {
-  stroke: rgba(126, 12, 0, 0.46);
+/* Cooling metal around the fissure: wide and dim, and the tariff's own colour. */
+.dsh-sh__mark .dsh-sh__crack-halo {
+  stroke: var(--dsh-sh-band);
+  opacity: 0.26;
 }
 /* The hot band. */
-.dsh-sh__mark .dsh-sh__heat-glow {
-  stroke: rgba(255, 74, 8, 0.78);
+.dsh-sh__mark .dsh-sh__crack-band {
+  stroke: var(--dsh-sh-band);
+  opacity: 0.92;
 }
-/* The molten centre, narrow and bright: the light comes from inside the crack. */
-.dsh-sh__mark .dsh-sh__heat-core {
-  stroke: rgba(255, 236, 198, 1);
+/* The travelling brightness. Its stroke is the gradient, set in the markup so that a
+   preview gets its own copy of it; only its strength is the stylesheet's business. */
+.dsh-sh__mark .dsh-sh__crack-flow {
+  opacity: 0.9;
+}
+/* The centre, narrow and bright: the light comes from inside the crack. */
+.dsh-sh__mark .dsh-sh__crack-core {
+  stroke: var(--dsh-sh-core);
 }
 /* The specular line inside the centre. */
-.dsh-sh__mark .dsh-sh__heat-flare {
+.dsh-sh__mark .dsh-sh__crack-flare {
   stroke: rgba(255, 255, 245, 0.95);
 }
 /* Pools where the widest fissures open. */
-.dsh-sh__mark .dsh-sh__heat-spill {
-  fill: rgba(255, 168, 74, 0.85);
+.dsh-sh__mark .dsh-sh__crack-spill {
+  fill: var(--dsh-sh-band);
+  opacity: 0.75;
 }
 /* The metal around the field, where the heat meets the rim. */
 .dsh-sh__mark .dsh-sh__heat-rim {
@@ -575,7 +619,29 @@
  * After the level rules on purpose: they share this selector's specificity, so the
  * order is what decides. `animation: none` is the belt to that brace — an arc with
  * nothing burning must not breathe either, or it would pulse in place. */
+/* The travelling brightness on the arc itself. Its stroke is the shared gradient
+   (set in the markup, so a preview gets its own); the level decides how much of it
+   shows. It deliberately does not join the breath: the band and the core pulse, and
+   this is the unevenness riding on top of them. */
+.dsh-sh__mark .dsh-sh__gauge-flow {
+  stroke-width: 1.2;
+  opacity: 0;
+  transition: opacity 400ms linear;
+}
+.dsh-sh__mark[data-burn="1"] .dsh-sh__gauge-flow {
+  opacity: 0.45;
+}
+.dsh-sh__mark[data-burn="2"] .dsh-sh__gauge-flow {
+  opacity: 0.6;
+}
+.dsh-sh__mark[data-burn="3"] .dsh-sh__gauge-flow {
+  opacity: 0.78;
+}
+.dsh-sh__mark[data-burn="4"] .dsh-sh__gauge-flow {
+  opacity: 0.95;
+}
 .dsh-sh__mark .dsh-sh__gauge[data-empty="1"],
+.dsh-sh__mark .dsh-sh__gauge-flow[data-empty="1"],
 .dsh-sh__mark .dsh-sh__gauge-core[data-empty="1"] {
   opacity: 0;
   animation: none;
@@ -590,6 +656,27 @@
   }
   50% {
     opacity: 1;
+  }
+}
+
+/* The light behind the metal.
+ *
+ * The flow gradient's stops pulse, and each one starts a little after the last — the
+ * stagger is an `animation-delay` written on the stop in the renderer, because nine
+ * selectors here would be nine places to forget. What that produces is a bright part
+ * of the gradient that travels along its axis, and so along the lit arc and along any
+ * lit fracture: the unevenness moves, which is what light behind something does.
+ */
+.dsh-sh__flow {
+  animation: dsh-sh-drift 3.6s ease-in-out infinite;
+}
+@keyframes dsh-sh-drift {
+  0%,
+  100% {
+    stop-opacity: 0.22;
+  }
+  50% {
+    stop-opacity: 1;
   }
 }
 
@@ -898,6 +985,7 @@ body:not([data-ds-dark-theme]) .dsh-sh__read .dsh-sh__detail {
  * everyone who does not need it and obvious to everyone who does. */
 @media (prefers-reduced-motion: reduce) {
   #dsh-souls-hud,
+  .dsh-sh__crack,
   .dsh-sh__fill,
   .dsh-sh__ghost {
     transition: none !important;
@@ -912,7 +1000,8 @@ body:not([data-ds-dark-theme]) .dsh-sh__read .dsh-sh__detail {
   .dsh-sh__mark[data-burn="3"] .dsh-sh__gauge,
   .dsh-sh__mark[data-burn="3"] .dsh-sh__gauge-core,
   .dsh-sh__mark[data-burn="4"] .dsh-sh__gauge,
-  .dsh-sh__mark[data-burn="4"] .dsh-sh__gauge-core {
+  .dsh-sh__mark[data-burn="4"] .dsh-sh__gauge-core,
+  .dsh-sh__flow {
     animation: none !important;
   }
 }

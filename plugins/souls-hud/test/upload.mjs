@@ -442,6 +442,52 @@ const html = `<!doctype html>
     parseFloat(floatStyle.paddingLeft) > 0, floatStyle.paddingLeft);
   floatHost.remove();
 
+  // --- a lit fracture is the ring's own light ------------------------------------
+  //
+  // The point of lighting the fractures from the arc is that they cannot read as a
+  // different light: same colour, same tariff, same brightness. The colour comes from
+  // the stylesheet, so a computed style is the only place it can be read.
+  function crackHost(tariff, burn) {
+    var host = document.createElement('div');
+    host.className = 'dsh-sh__mark';
+    host.setAttribute('data-material', 'bronze');
+    host.setAttribute('data-device', 'whale');
+    host.setAttribute('data-tariff', tariff);
+    host.setAttribute('data-burn', burn);
+    host.innerHTML = renderer.previewSvg({ device: 'whale', material: 'bronze', gauge: 0.6 });
+    document.body.appendChild(host);
+    return host;
+  }
+  var peakHost = crackHost('peak', '4');
+  var peakRing = getComputedStyle(peakHost.querySelector('.dsh-sh__gauge')).stroke;
+  var peakLit = getComputedStyle(peakHost.querySelector('.dsh-sh__crack[data-lit="1"] .dsh-sh__crack-band')).stroke;
+  var peakUnlit = peakHost.querySelector('.dsh-sh__crack:not([data-lit])');
+  check('a lit fracture is the colour of the ring that lit it', peakLit === peakRing,
+    'fracture ' + peakLit + ' vs ring ' + peakRing);
+  check('a fracture the arc has not reached stays dark',
+    peakUnlit !== null && getComputedStyle(peakUnlit).opacity === '0',
+    peakUnlit === null ? 'no unlit fracture in the frame' : getComputedStyle(peakUnlit).opacity);
+  check('and one it has reached is lit',
+    Number(getComputedStyle(peakHost.querySelector('.dsh-sh__crack[data-lit="1"]')).opacity) > 0,
+    getComputedStyle(peakHost.querySelector('.dsh-sh__crack[data-lit="1"]')).opacity);
+  // The flow gradient: nine stops, each starting a little after the last, and an
+  // animation on them — that stagger is the whole of the travelling light.
+  var flowStops = peakHost.querySelectorAll('.dsh-sh__flow');
+  var delays = [].map.call(flowStops, function (stop) { return stop.style.animationDelay; });
+  check('the flow gradient has its stops', flowStops.length === 9, 'stops: ' + flowStops.length);
+  check('every stop starts at a different moment',
+    delays.length === 9 && new Set(delays).size === 9, delays.join(' '));
+  check('and the stops are the thing that moves',
+    flowStops.length === 9 && getComputedStyle(flowStops[0]).animationName === 'dsh-sh-drift',
+    flowStops.length === 9 ? getComputedStyle(flowStops[0]).animationName : 'no stops');
+  peakHost.remove();
+  // Off-peak the ring is cool, and every fracture it lights goes with it.
+  var offHost = crackHost('offpeak', '4');
+  var offLit = getComputedStyle(offHost.querySelector('.dsh-sh__crack[data-lit="1"] .dsh-sh__crack-band')).stroke;
+  check('off-peak a lit fracture follows the ring to the cool colour', offLit !== peakLit,
+    'off-peak ' + offLit + ' vs peak ' + peakLit);
+  offHost.remove();
+
   // --- can the badge actually be clicked? --------------------------------------
   //
   // Not "does the handler call the API" — that was fine and the badge still did
@@ -564,15 +610,10 @@ const html = `<!doctype html>
   check('the fractures paint over the figure', cracksAt > deviceAt, 'cracks at ' + cracksAt + ', figure at ' + deviceAt);
   check('the fractures stay clipped to the field', frame.slice(cracksAt - 200, cracksAt).indexOf('clip-path') !== -1,
     frame.slice(Math.max(0, cracksAt - 200), cracksAt));
-  var layers = [
-    'dsh-sh__heat-wash',
-    'dsh-sh__heat-field',
-    'dsh-sh__heat-ember',
-    'dsh-sh__heat-glow',
-    'dsh-sh__heat-core',
-    'dsh-sh__heat-flare',
-    'dsh-sh__heat-rim',
-  ];
+  // The overlay is the plate's wash now. The fractures left it when they stopped
+  // being a property of the tariff window — they are per-crack and coverage-driven,
+  // checked below.
+  var layers = ['dsh-sh__heat-wash', 'dsh-sh__heat-field', 'dsh-sh__heat-rim'];
   for (var layer = 0; layer < layers.length; layer += 1) {
     check('the overlay draws its ' + layers[layer], frame.indexOf(layers[layer]) !== -1);
   }
@@ -604,7 +645,49 @@ const html = `<!doctype html>
     'stroke widths found: ' + crackWidths.join(', '));
   check('the fractures are thin lines', Math.max.apply(null, crackWidths) <= 1.5,
     'widest crack: ' + Math.max.apply(null, crackWidths));
-  check('the heat pools where the widest fractures open', frame.indexOf('dsh-sh__heat-spill') !== -1);
+  check('a pool forms where the widest fractures open',
+    frame.indexOf('dsh-sh__crack-spill') !== -1, 'no spill circle');
+
+  // --- which fractures the arc has reached -------------------------------------
+  //
+  // The fractures are lit by *position*: one group per crack, data-at carrying the
+  // angle it opens at, and data-lit on the ones the sweep covers. The sets below
+  // are the geometry's own numbers — the six rim angles against the arc's start — so
+  // they are golden values rather than a restatement of the rule they test.
+  //
+  // Crack order from the renderer, with the rim angle each opens at:
+  //   0 lower left 246  1 its branch 244  2 bottom 214
+  //   3 lower right 130  4 its branch 127  5 top 358
+  function litCracks(markup) {
+    var host = document.createElement('div');
+    host.innerHTML = markup;
+    var lit = [];
+    var groups = host.querySelectorAll('.dsh-sh__crack[data-lit="1"]');
+    for (var i = 0; i < groups.length; i += 1) lit.push(Number(groups[i].getAttribute('data-crack')));
+    lit.sort(function (a, b) { return a - b; });
+    return lit.join(',');
+  }
+  function frameAt(ratio, shape) {
+    return renderer.previewSvg({ device: 'whale', shape: shape || 'round', material: 'bronze', gauge: ratio });
+  }
+  check('every fracture gets a group of its own',
+    (frame.match(/class="dsh-sh__crack"/g) || []).length === 6,
+    'groups: ' + (frame.match(/class="dsh-sh__crack"/g) || []).length);
+  check('and carries the angle it opens at',
+    (frame.match(/data-at="/g) || []).length === 6,
+    'angles: ' + (frame.match(/data-at="/g) || []).length);
+  // The frame above is the 0.4 one the rest of this file drives the gauge with.
+  check('an arc that has not reached them lights none', litCracks(frameAt(0)) === '', litCracks(frameAt(0)));
+  check('a quarter of the perimeter still reaches none', litCracks(frameAt(0.25)) === '', litCracks(frameAt(0.25)));
+  check('60% reaches the bottom three', litCracks(frameAt(0.6)) === '2,3,4', litCracks(frameAt(0.6)));
+  check('90% reaches five of the six', litCracks(frameAt(0.9)) === '0,1,2,3,4', litCracks(frameAt(0.9)));
+  check('a closed ring reaches all six', litCracks(frameAt(1)) === '0,1,2,3,4,5', litCracks(frameAt(1)));
+  // The octagon's gauge starts at its first vertex rather than at the top, so the same
+  // reading lights a different set. That is the whole reason the start angle is read
+  // off the silhouette instead of assumed.
+  check('the octagon lights a different set at the same reading',
+    litCracks(frameAt(0.6, 'octagon')) !== litCracks(frameAt(0.6, 'round')),
+    'octagon ' + litCracks(frameAt(0.6, 'octagon')) + ' vs round ' + litCracks(frameAt(0.6, 'round')));
 
   // --- the preview board ----------------------------------------------------
   //

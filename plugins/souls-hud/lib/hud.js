@@ -855,6 +855,10 @@
       (gauge.empty ? ' data-empty="1"' : "");
     plateMarkup +=
       '<path class="dsh-sh__gauge" fill="none" stroke-linecap="round" d="' + gauge.d + gaugeDash + "/>" +
+      // The flow sits between the band and the core: its stroke is the shared
+      // gradient, so what travels along the arc is brightness, not colour.
+      '<path class="dsh-sh__gauge-flow" fill="none" stroke-linecap="round" stroke="url(#dsh-sh-flow)" d="' +
+      gauge.d + gaugeDash + "/>" +
       '<path class="dsh-sh__gauge-core" fill="none" stroke-linecap="round" d="' + gauge.d + gaugeDash + "/>";
     var fieldOpening = round
       ? '<circle cx="24" cy="24" r="' + geometry.round.fieldRadius + '"/>'
@@ -879,31 +883,10 @@
      * running hot is visible at a glance, and it also raises the whole badge's
      * contrast, which is why it reads as "brighter" rather than "tinted".
      */
-    // Widest and dimmest first (the metal around the crack cooling), then the hot
-    // band, then the molten centre — which is *narrower* than the crack itself, so
-    // the bright part sits inside it and the light appears to come from within.
-    // The passes are wider than the plain fracture because the heat spills past
-    // its edges: that is the difference between "the cracks are lit" and "lava is
-    // coming out of them".
-    var heatCracks =
-      '<g class="dsh-sh__heat-ember">' + crackPaths(geometry.cracks, 3.4) + "</g>" +
-      '<g class="dsh-sh__heat-glow">' + crackPaths(geometry.cracks, 2.1) + "</g>" +
-      '<g class="dsh-sh__heat-core">' + crackPaths(geometry.cracks, 0.8) + "</g>" +
-      // The flare is the specular line *inside* the molten centre: white hot, and
-      // narrower than the core, so the middle of a wide fissure reads as glowing
-      // rather than as painted orange.
-      '<g class="dsh-sh__heat-flare">' + crackPaths(geometry.cracks, 0.34) + "</g>";
-    // A few molten pools where the widest fractures open, which is where lava
-    // would actually collect.
-    var spill = geometry.cracks
-      .filter(function (crack) {
-        return crack.w >= 0.75;
-      })
-      .map(function (crack) {
-        var at = crack.pts[1] || crack.pts[0];
-        return '<circle class="dsh-sh__heat-spill" cx="' + at[0] + '" cy="' + at[1] + '" r="' + round3(crack.w * 1.2) + '"/>';
-      })
-      .join("");
+    // What is left of the overlay is the plate: peak hours wash the metal warm, and
+    // that is the signal that owes nothing to whether anything is burning. The
+    // fractures left it when they stopped being a property of the tariff window and
+    // became a property of where the arc is — see `crackGroup`.
     var heatField = round
       ? '<circle cx="24" cy="24" r="' + geometry.round.fieldRadius + '"/>'
       : '<polygon points="' + geometry.octagon.field + '"/>';
@@ -914,17 +897,27 @@
       '<g class="dsh-sh__heat">' +
       '<g class="dsh-sh__heat-wash">' + heatPlate.replace("/>", ' fill="url(#dsh-sh-heat-plate)"/>') + "</g>" +
       '<g class="dsh-sh__heat-field">' + heatField.replace("/>", ' fill="url(#dsh-sh-heat-field)"/>') + "</g>" +
-      '<g clip-path="url(#dsh-sh-clip)">' +
-      heatCracks +
-      "</g>" +
       '<g class="dsh-sh__heat-rim">' +
       // `/>` on the end, like every other replace here: dropping it swallowed the
       // group's own closing tag into the element, which the browser parsed as a
       // nonsense attribute and then re-nested the rest of the frame around.
       heatField.replace("/>", ' fill="none" stroke-width="3.2"/>') +
       "</g>" +
-      spill +
       "</g>";
+
+    // The lit fractures: one group per crack, gated on the sweep rather than on the
+    // tariff, so the arc lights the crack it has reached and the others stay dark red.
+    // The initial state is computed here rather than left to the first paint, which is
+    // what makes a committed preview show it.
+    var litSpan = clamp01(opts.gauge || 0);
+    var litCracks = "";
+    for (var crack = 0; crack < geometry.cracks.length; crack += 1) {
+      litCracks += crackGroup(
+        geometry.cracks[crack],
+        crack,
+        crackLit(round ? "round" : "octagon", litSpan, rimAngle(geometry.cracks[crack])),
+      );
+    }
 
     var out =
       '<svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" data-shape="' + (round ? "round" : "octagon") + '">' +
@@ -947,6 +940,12 @@
       '<stop offset="0.3" style="stop-color:var(--dsh-sh-device-1,#cba96c)"/>' +
       '<stop offset="0.62" style="stop-color:var(--dsh-sh-device-2,#8c6e3a)"/>' +
       '<stop offset="1" style="stop-color:var(--dsh-sh-device-3,#4d3c1b)"/>' +
+      "</linearGradient>" +
+      // The light behind the metal, made uneven so that it reads as moving. One
+      // gradient, shared by the ring's lit arc and by every lit fracture — see
+      // `flowStops` for why only the opacities move.
+      '<linearGradient id="dsh-sh-flow" x1="0" y1="0" x2="1" y2="0.35">' +
+      flowStops() +
       "</linearGradient>" +
       // Heat, not colour: these are literal warm stops on purpose. They are not
       // the metal (the material owns that) and they are not the tariff tint (the
@@ -999,8 +998,14 @@
       fieldLip +
       deviceGroup(device, customMarkup) +
       '<g clip-path="url(#dsh-sh-clip)">' +
+      // The rest state first: every fracture, in the dark red the casting shows when
+      // there is nothing behind it. The lit groups paint over these, and their passes
+      // are wider, so a lit crack covers its own resting line.
       '<g class="dsh-sh__cracks" fill="none" stroke-linecap="round" stroke-linejoin="round">' +
       crackPaths(geometry.cracks, 1) +
+      "</g>" +
+      '<g class="dsh-sh__crack-lights" fill="none" stroke-linecap="round" stroke-linejoin="round">' +
+      litCracks +
       "</g></g>" +
       heat +
       "</svg>";
@@ -1065,6 +1070,138 @@
 
   /** The three widths a fracture is drawn at, from its rim end to its tip. */
   var CRACK_TAPER = [1, 0.72, 0.45];
+
+  /**
+   * How far short of a fracture the arc may be and still light it.
+   *
+   * The lit arc's own end carries a round cap and a glow that reach past the dash,
+   * and a fracture's light takes a moment to come up — it is a CSS transition — so a
+   * fracture that only lights on the exact frame the edge arrives reads as late. A
+   * few degrees of lead, well under 2% of the perimeter, is what makes the two meet.
+   */
+  var CRACK_LEAD_DEG = 7;
+
+  /**
+   * Where a fracture opens onto the rim, in degrees clockwise from the top.
+   *
+   * `pts[0]` is the rim end: the walk that generated these starts *outside* the
+   * field so the clip trims it, which is what makes a fracture enter from the edge
+   * rather than float in the middle of the casting.
+   *
+   * @param crack - one entry of `geometry.cracks`.
+   * @returns 0..360.
+   */
+  function rimAngle(crack) {
+    var at = crack.pts[0];
+    var degrees = (Math.atan2(at[0] - 24, -(at[1] - 24)) * 180) / Math.PI;
+    return (degrees + 360) % 360;
+  }
+
+  /**
+   * Where the lit arc starts, for one silhouette.
+   *
+   * The round gauge is two half-turns written from the top, so it starts at 0. The
+   * octagon's gauge walks its inset vertices in the order the plate lists them,
+   * which begins at the top-left corner — not at the top, and not at 12 o'clock.
+   *
+   * @param shape - `round` | `octagon`.
+   * @returns 0..360.
+   */
+  function gaugeStartAngle(shape) {
+    if (shape !== "octagon") return 0;
+    var first = insetPolygon(MEDALLION_GEOMETRY.octagon.plate, 0.94).split(" ")[0].split(",");
+    var degrees = (Math.atan2(Number(first[0]) - 24, -(Number(first[1]) - 24)) * 180) / Math.PI;
+    return (degrees + 360) % 360;
+  }
+
+  /**
+   * Whether the lit arc has reached a fracture yet.
+   *
+   * The arc grows clockwise from the gauge's start, so this is one comparison in
+   * angle space: how far into the sweep the fracture sits, against how far the sweep
+   * reaches. Angles rather than perimeter lengths on purpose — an octagon corner
+   * covers more angle than its share of the edge, and the difference lands within a
+   * degree or two of the leading edge, where the eye is on the light.
+   *
+   * @param shape - `round` | `octagon`.
+   * @param ratio - 0..1 of the perimeter lit.
+   * @param angle - the fracture's rim angle.
+   * @returns true when the sweep covers it.
+   */
+  function crackLit(shape, ratio, angle) {
+    var span = clamp01(ratio) * 360;
+    if (span <= 0) return false;
+    var into = (angle - gaugeStartAngle(shape) + 360) % 360;
+    return into <= Math.min(360, span + CRACK_LEAD_DEG);
+  }
+
+  /**
+   * The stops that make the glow uneven, and therefore look like it is moving.
+   *
+   * One gradient is shared by the ring's lit arc and by every lit fracture, so the
+   * shimmer is one object in both places and cannot drift out of colour with the
+   * ring: the stops carry `--dsh-sh-core`, the light the band's core is made of, so
+   * what travels is brightness over the tariff colour rather than a moving tint of it.
+   *
+   * Only their *opacity* moves. A stop that pulses a little behind its neighbour
+   * makes the bright part of the gradient travel, which is what light behind the
+   * metal does; `hud.css` staggers the delays. That is the whole effect — no filter,
+   * no mask, and nothing per-frame in the renderer.
+   *
+   * @returns the `<stop>` elements.
+   */
+  function flowStops() {
+    var count = 9;
+    // One period across all nine, so the wave wraps without a seam: the delay on
+    // stop `i` is `-i * period / count`.
+    var period = 3.6;
+    var out = "";
+    for (var i = 0; i < count; i += 1) {
+      out +=
+        '<stop class="dsh-sh__flow" offset="' + round3(i / (count - 1)) +
+        '" style="stop-color:var(--dsh-sh-core,#fffaf0);animation-delay:' +
+        round3(-(i * period) / count) + 's" stop-opacity="0.55"/>';
+    }
+    return out;
+  }
+
+  /**
+   * One fracture and everything that can happen to it.
+   *
+   * The group is the unit the arc lights: `data-at` is the rim angle it opens at and
+   * `data-lit` says whether the sweep currently covers it, so a fracture lights when
+   * the leading edge reaches it and goes out when the reading falls back. Every pass
+   * is drawn whether or not it is lit — the stylesheet decides which of them paint,
+   * which is what lets one mechanism serve both the dark red rest state and the glow.
+   *
+   * The passes are the ring's own stack, scaled up: a wide halo past the crack (that
+   * is the difference between "the crack is lit" and "light is coming out of it"), the
+   * band, the travelling flow, the core, and the specular flare inside it.
+   *
+   * @param crack - one entry of `geometry.cracks`.
+   * @param index - its position, for the DOM.
+   * @param lit - whether the sweep covers it.
+   * @returns the group.
+   */
+  function crackGroup(crack, index, lit) {
+    var at = crack.pts[1] || crack.pts[0];
+    return (
+      '<g class="dsh-sh__crack" data-crack="' + index + '" data-at="' + round3(rimAngle(crack)) + '"' +
+      (lit ? ' data-lit="1"' : "") +
+      ">" +
+      '<g class="dsh-sh__crack-halo">' + crackPaths([crack], 3.4) + "</g>" +
+      '<g class="dsh-sh__crack-band">' + crackPaths([crack], 2.1) + "</g>" +
+      // The gradient is referenced from the markup rather than the stylesheet, so
+      // that `previewSvg`'s id re-pointing reaches it and a preview gets its own.
+      '<g class="dsh-sh__crack-flow" stroke="url(#dsh-sh-flow)">' + crackPaths([crack], 1.15) + "</g>" +
+      '<g class="dsh-sh__crack-core">' + crackPaths([crack], 0.8) + "</g>" +
+      '<g class="dsh-sh__crack-flare">' + crackPaths([crack], 0.34) + "</g>" +
+      (crack.w >= 0.75
+        ? '<circle class="dsh-sh__crack-spill" cx="' + at[0] + '" cy="' + at[1] + '" r="' + round3(crack.w * 1.2) + '"/>'
+        : "") +
+      "</g>"
+    );
+  }
 
   /**
    * The fractures, as tapered strokes.
@@ -2211,7 +2348,7 @@
    */
   function paintGauge(ratio) {
     if (!mark) return;
-    var paths = mark.querySelectorAll(".dsh-sh__gauge, .dsh-sh__gauge-core");
+    var paths = mark.querySelectorAll(".dsh-sh__gauge, .dsh-sh__gauge-flow, .dsh-sh__gauge-core");
     if (!paths.length) return;
     var next = gaugeAttributes(paintedShape, ratio);
     for (var i = 0; i < paths.length; i += 1) {
@@ -2227,6 +2364,17 @@
         path.setAttribute("stroke-dasharray", next.dasharray);
       }
       path.setAttribute("stroke-dashoffset", next.dashoffset);
+    }
+    // ...and the fractures the sweep has reached. One boolean per crack, compared
+    // against the angle it opens at: the stylesheet owns what lit *looks* like, so
+    // this stays a comparison rather than an animation, and it costs one attribute
+    // per fracture on a poll that is already running.
+    var cracks = mark.querySelectorAll(".dsh-sh__crack");
+    for (var c = 0; c < cracks.length; c += 1) {
+      var group = cracks[c];
+      var at = Number(group.getAttribute("data-at"));
+      if (crackLit(paintedShape, ratio, isFinite(at) ? at : 0)) group.setAttribute("data-lit", "1");
+      else group.removeAttribute("data-lit");
     }
   }
 
@@ -2773,7 +2921,7 @@
     // Every id in the frame, in this order. `heat` before `plate`: a split/join on
     // `dsh-sh-plate` would otherwise reach inside `dsh-sh-heat-plate`. (Classes are
     // safe from this pass by convention — ids use one hyphen, classes two.)
-    ["heat", "plate", "recess", "device", "clip"].forEach(function (role) {
+    ["heat", "plate", "recess", "device", "clip", "flow"].forEach(function (role) {
       markup = markup.split("dsh-sh-" + role).join(uid + "-" + role);
     });
     // The paint pass is bounded to the device group's *own* subtree — repainting
@@ -2852,6 +3000,10 @@
     // well as in the markup, so the enamel follows the device that is drawn.
     var painted = device === "custom" && !custom ? "whale" : device;
     var gauge = typeof opts.gauge === "number" && isFinite(opts.gauge) ? clamp01(opts.gauge) : lastBurn.ratio;
+    // The level the live mark would be wearing at this fill. The same ceiling the host
+    // applies, so a cell and the badge agree at the same reading — and a cell that did
+    // not carry it would be a picture of an idle badge with a lit ring.
+    var previewLevel = gauge === 0 ? 0 : Math.max(1, Math.ceil(gauge * 4));
     var size = Math.max(24, Math.min(96, Number(opts.size) || 40));
     var cells = [];
     [true, false].forEach(function (dark) {
@@ -2875,6 +3027,11 @@
             // combinations inside whatever theme the app happens to be in, and an
             // ancestor test cannot tell "the app is dark" from "this cell is light".
             '" data-cut="' + (dark ? "dark" : "light") +
+            // The level too, from the same sample fill: a cell is a picture of the
+            // badge at this reading, and the level is what decides how much of the lit
+            // arc, which fractures, and how much of the drift is showing. Without it a
+            // cell would quietly be a picture of an idle badge with a lit ring.
+            '" data-burn="' + previewLevel +
             '" style="width:' + size + "px;height:" + size + 'px;display:inline-block">' +
             markup +
             "</span></span>",

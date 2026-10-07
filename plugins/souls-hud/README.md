@@ -259,6 +259,15 @@ the stylesheet and fails if one is missing from the `prefers-reduced-motion` blo
 dash, every lit level breathes, the core brightens with the burn, and the empty arc is
 dark and still.
 
+**And the light inside the lit arc moves.** A third pass rides between the band and the
+core, stroked with a nine-stop gradient whose stops carry the core's colour and move only
+their *opacity* — each stop a little behind the last, so the bright part of the gradient
+travels along its axis, and therefore along the arc. That is the whole of the effect: no
+filter, no mask, and nothing per-frame in the renderer, just one staggered
+`animation-delay` per stop, written where the stops are built. The lit fractures stroke
+the *same* gradient, which is why they shimmer in step with the arc instead of merely
+sharing its colour.
+
 The rate is measured on the host, from `@deepseek-ai/dsh-token-meter`'s
 `tokenUsage` projection — that session's ledger, which only grows, so a
 difference over time is a rate and a compaction cannot bend it. The host samples
@@ -275,7 +284,7 @@ off-peak does not:
 | State | What it looks like |
 | --- | --- |
 | off-peak, idle | the calm medal: metal, shadow, fractures |
-| peak, idle | a warm wash over the plate and the recessed field, firelight standing in every fracture, a glow where the rim meets the field, and the frame slightly brighter and more saturated |
+| peak, idle | a warm wash over the plate and the recessed field, a glow where the rim meets the field, and the frame slightly brighter and more saturated. The fractures are the arc's business now, and at idle there are none |
 | peak, burning | the same, turned up with the burn level, with the ring lit on top |
 
 At peak the ring's glow also reaches one step further than off-peak at the same burn
@@ -288,17 +297,19 @@ idle rising to 1.0, and a slow pulse at the top level (disabled under
 the metal (the material owns that) and not the tariff tint (the ring owns that),
 it is what peak hours *do* to the medal.
 
-Two things about it are load-bearing rather than cosmetic:
+**The fractures are no longer part of it.** They used to be: every one of them lit
+together whenever the window was peak. They are lit by the *arc* now — one group per
+crack, `data-lit` set on the ones the sweep has reached — so the fire travels around the
+medal with the burning edge instead of switching on with the clock. The overlay keeps the
+plate, the field and the rim.
+
+One thing about it is load-bearing rather than cosmetic:
 
 - **It paints last, over the figure.** Partly because that is what the reference
   looks like, and partly because a `<g>` carrying `opacity: 0` *before* a sibling
   that fills from a gradient made that sibling vanish in Chrome — the figure came
   and went with the tariff window, which reads exactly like the overlay being
   hidden on purpose. `test/upload.mjs` asserts the order now.
-- **The fractures are lit from behind** by drawing the same crack paths twice: a
-  wide dim pass and a narrow bright core. Two strokes rather than one blurred
-  stroke, for the same reason the rim's shadow is two — a filter would need an id,
-  and every id in this markup has to be re-pointed in the preview.
 
 ### The fractures
 
@@ -317,7 +328,7 @@ rather than as a shatter:
 - **Tapered.** Each fracture has a weight, and its segments are bucketed into three
   widths from the rim end to the tip (`crackPaths`), so the paths carry different
   `stroke-width`s. A crack of constant width is a scratch.
-- **Dark.** `--dsh-sh-crack` is a dark ink in all eight palettes; a translucent
+- **Dark red.** `--dsh-sh-crack` is a dark red ink in all eight palettes; a translucent
   bronze on a dark field reads as a *highlight*, which is the opposite of a gap.
   A lit lip behind the gap was tried and dropped: at 48px the offset anti-aliases
   into a grey ridge. What makes a dark crack legible is the *field* being a metal
@@ -330,26 +341,48 @@ the field so the clip trims them — a fracture should enter from the rim) and k
 as literal data, because `test/icon.mjs` evaluates that literal out of the source
 and the card artwork is drawn from it.
 
-When the heat is on, each fracture is drawn three more times, from the outside in:
+#### Which of them are lit
+
+A fracture is lit when the **arc has reached it**, and it goes out when the reading falls
+back. The arc grows clockwise from the top of the round medal — or from the octagon's
+first vertex — so the test is one comparison in angle space: how far into the sweep a
+crack sits, against how far the sweep reaches, plus a few degrees of lead so the two meet
+rather than the crack arriving late. `test/upload.mjs` pins the sets that geometry
+produces: 60% lights the three on the bottom and lower right, 90% lights five, a closed
+ring lights all six, and the octagon lights a *different* set at the same reading because
+its gauge starts somewhere else.
+
+A lit fracture is drawn as a stack, from the outside in:
 
 | Pass | Width | Colour | Meaning |
 | --- | --- | --- | --- |
-| `heat-ember` | 3.4× the crack | dark red | the metal around it, cooling |
-| `heat-glow` | 2.1× | red-orange | the fissure itself |
-| `heat-core` | **0.8×** | pale yellow | the molten centre |
-| `heat-flare` | **0.34×** | white hot | the specular line inside it |
+| `crack-halo` | 3.4× the crack | the ring's colour, dim | light spilling out of the fissure |
+| `crack-band` | 2.1× | the ring's colour | the fissure itself |
+| `crack-flow` | 1.15× | the drifting gradient | the brightness travelling inside it |
+| `crack-core` | **0.8×** | near-white | the molten centre |
+| `crack-flare` | **0.34×** | white hot | the specular line inside it |
 
-The wash gradients are red-first for the same reason: lava is red where it is
-cooling and yellow only where it is hottest.
+Every colour but the last two comes from `--dsh-sh-band` and `--dsh-sh-core`, the same
+properties the ring's own band and core are stroked with. That is the only reason a lit
+fracture and the arc that lit it cannot drift apart as the tariff changes: off-peak they
+are both cool, and no second palette has to be kept in step.
 
 The bright part is *narrower* than the crack and the dim part *wider*, which is
 what makes the light look like it is coming out of the fissure rather than being
-painted on it; a few `heat-spill` pools sit where the widest ones open. On the
+painted on it; a `crack-spill` pool sits where the widest one opens. On the
 pale cut the **wash** is scaled to a third (`--dsh-sh-heat-scale`) so the field
 does not turn the colour of the lava — the fire inside the cracks is not scaled,
 because that is the part worth seeing on either cut.
 
-![The same badge off-peak and at peak](./preview/shots/heat-peak.png)
+![Off-peak with nothing in the fractures, and at peak with the arc's five alight](./preview/shots/heat-peak.png)
+
+Two scenes from the same page, shot the way the hero above is: `#burn-low` (off-peak,
+25% spent) over `#burn-high` (peak, 90%), at 3x, with `.chrome`, `.mockFrame` and
+`#scene-label` hidden, each cropped to the ink and the two stacked. Both panels have to
+be captured *after* the page's first poll — the fixtures arrive asynchronously, and a
+shot taken too early is a picture of an idle badge with the bars unfilled. The second
+panel is the point of this section: in one frame, some fractures are lit and the rest
+are not.
 
 ### Floating, when the sidebar is collapsed
 
