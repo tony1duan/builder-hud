@@ -42,6 +42,14 @@ returns as its own setting, never as a side effect of picking a motif.
 | The bundle (the card in the Plugins page) | **BuilderHUD** | [`dsh-plugin-builder-hud`](../builder-hud) |
 | The component (the row with the settings, and everything in this directory) | **Souls Style** | `dsh-plugin-souls-hud` |
 
+> **The package name still says `souls-hud`; the display name says Souls Style.** That
+> is deliberate. The package name, the row id, the route prefix, the settings file
+> (`~/.dsh/souls-hud.json`) and the config keys are what an *installed* instance is
+> addressed by, so renaming them would move every existing install's settings out from
+> under it — for a name only a reader sees. The display name comes from
+> `locale/*.json`, which is why the two no longer match: what people read changed,
+> what the app resolves did not.
+
 The card's title comes from the package named in `dsh.profile.bundles`; the
 row's comes from the package the row's `name:` points at. Two titles therefore
 need two packages, and the split is **not** cosmetic — a row has to name a real
