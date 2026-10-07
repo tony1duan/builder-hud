@@ -594,19 +594,19 @@
 }
 
 /* Floating: the sidebar is collapsed, so the brand row this cluster replaces is
-   gone. It becomes a small card that can be dragged anywhere — and it needs its
-   own surface, because nothing else is behind it any more. */
+   gone, and the cluster becomes something you can drag anywhere.
+ *
+ * It gets **no surface of its own**. It used to be a card — a translucent panel
+ * with a hairline and a lift shadow — and that read as an app panel pasted over
+ * the conversation. Drawing does not need one: the medallion carries the rim's
+ * shadow and the figure's, each bar and its socket carry theirs, and the read-outs
+ * carry a text shadow that flips with the theme. So what separates the cluster
+ * from whatever is behind it is the artwork itself. */
 #dsh-souls-hud.dsh-sh--float {
+  /* Kept: the grab area, and the room the shadows need at the edges. */
   padding: 6px 8px;
-  border-radius: 11px;
   cursor: grab;
   pointer-events: auto;
-  background: rgba(250, 249, 246, 0.86);
-  box-shadow: 0 6px 20px rgba(20, 16, 8, 0.22), 0 0 0 1px rgba(20, 16, 8, 0.06);
-}
-[data-ds-dark-theme] #dsh-souls-hud.dsh-sh--float {
-  background: rgba(24, 23, 21, 0.82);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 236, 196, 0.07);
 }
 #dsh-souls-hud.dsh-sh--float.dsh-sh--dragging {
   cursor: grabbing;

@@ -353,11 +353,18 @@ because that is the part worth seeing on either cut.
 
 ### Floating, when the sidebar is collapsed
 
-Collapsed to a rail there is no brand row to sit in, so the cluster becomes a
-small floating card that can be **dragged** anywhere — measured, not guessed: the
-rail's width and the row's own box are both things only the document knows, and
-the app does not announce the collapse.
+Collapsed to a rail there is no brand row to sit in, so the cluster floats free and
+can be **dragged** anywhere — measured, not guessed: the rail's width and the row's
+own box are both things only the document knows, and the app does not announce the
+collapse.
 
+- **It paints no surface of its own.** It used to be a card — a translucent panel
+  with a hairline and a lift shadow — and that read as an app panel pasted over the
+  conversation. Nothing needed it: the medallion carries the rim's shadow and the
+  figure's, each bar and its socket carry theirs, and the read-outs carry a text
+  shadow that flips with the theme. The drawing is the whole of what separates it
+  from the page. `test/upload.mjs` asserts the background and the shadow are gone
+  and that the pointer behaviour is not.
 - **It starts below the app's tabs, by 44px** — not beside them. A chat's code
   blocks grow sticky headers as they scroll past, and in a narrow window those
   slide up under anything parked at the top of the rail.

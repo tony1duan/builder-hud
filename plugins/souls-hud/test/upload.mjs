@@ -417,6 +417,31 @@ const html = `<!doctype html>
     'the empty gauge is animating');
   coreHost.remove();
 
+  // --- the floating cluster paints no surface ------------------------------------
+  //
+  // Floating used to mean a card: a translucent panel with a hairline and a lift
+  // shadow. It read as an app panel pasted over the conversation, and the artwork
+  // never needed it — the medallion, each bar and its socket, and the read-outs all
+  // carry their own shadow in both themes, so the drawing is what separates the
+  // cluster from whatever is behind it. What must *not* go with the surface is the
+  // pointer behaviour: the padding is the grab area, and the cursor is the only hint
+  // that it can be dragged at all.
+  var floatHost = document.createElement('div');
+  floatHost.id = 'dsh-souls-hud';
+  floatHost.className = 'dsh-sh--float';
+  floatHost.innerHTML = renderer.previewSvg({ device: 'whale', material: 'bronze', gauge: 0.4 });
+  document.body.appendChild(floatHost);
+  var floatStyle = getComputedStyle(floatHost);
+  check('a floating cluster paints no background of its own',
+    floatStyle.backgroundColor === 'rgba(0, 0, 0, 0)', floatStyle.backgroundColor);
+  check('and casts no card shadow', floatStyle.boxShadow === 'none', floatStyle.boxShadow);
+  check('but still takes the pointer, so it can be dragged',
+    floatStyle.pointerEvents === 'auto' && floatStyle.cursor === 'grab',
+    floatStyle.pointerEvents + ' / ' + floatStyle.cursor);
+  check('and keeps the padding that is the grab area',
+    parseFloat(floatStyle.paddingLeft) > 0, floatStyle.paddingLeft);
+  floatHost.remove();
+
   // --- can the badge actually be clicked? --------------------------------------
   //
   // Not "does the handler call the API" — that was fine and the badge still did
