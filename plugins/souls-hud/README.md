@@ -804,7 +804,8 @@ per-device rules at all any more: an earlier cut had covenant enamels in
 material ones — a light enamel rule and a light material
 rule have the same specificity, and the device has to win the field); the bar
 geometry (`--dsh-sh-h`, `--dsh-sh-gap`) lives in `:root`. After changing the frame or a
-device, run `node test/icon.mjs` so the card artwork follows, and
+device, run `node plugins/builder-hud/test/icon.mjs --shape octagon --device sun
+--out plugins/souls-hud/icon.svg` so this skin's row icon follows, and
 `node plugins/souls-hud/test/harness.mjs` to prove it did.
 
 ## Support

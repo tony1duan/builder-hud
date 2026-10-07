@@ -10,6 +10,7 @@ fails, the failure usually explains itself.
 | --- | --- |
 | `plugins/builder-hud` | the **bundle**: the card the Plugins page lists, and the patch layer that puts a row on it. No runtime code, on purpose |
 | `plugins/souls-hud` | the **skin**: the host half (state, settings, the donation route), the client half (the settings form), and the renderer (`lib/hud.js` + `lib/hud.css`) |
+| `test/` | the repository metadata guard: `.github/`, and the links and commands in the documents. It belongs to neither package, on purpose |
 
 [`plugins/souls-hud/README.md`](plugins/souls-hud/README.md) is the real
 documentation — installation, every setting, the artwork, the tariff rule, the
@@ -67,6 +68,7 @@ the test files assume macOS, and nothing else does.
 | `node plugins/souls-hud/test/devices.mjs --check` | `assets/devices/` still matches the renderer |
 | `node plugins/builder-hud/test/icon.mjs --check` | the card artwork still matches the renderer |
 | `node plugins/souls-hud/test/preview.mjs` | rebuilds `preview/preview.html` from the fixtures |
+| `node test/repo.mjs` | the issue forms, the sponsor button, the pull-request template, and every link, anchor and command in the documents |
 
 Run all of them before opening a pull request. The two `--check` scripts compare
 committed artwork against what the renderer draws now: run them without `--check`
@@ -81,6 +83,8 @@ files are current.
 | A setting, or the settings form | `lib/client.js` (`DICT` for copy, `settingsForm` for the form) | `test/form.mjs` |
 | What data exists, or a route | `lib/host.js` | `test/harness.mjs` |
 | The card (name, icon, description) | `plugins/builder-hud` | `plugins/builder-hud/test/icon.mjs` |
+| An issue form, the sponsor button, the pull-request template | `.github/` | `test/repo.mjs` |
+| A heading the documents link to | the heading, and every link that names it | `test/repo.mjs` |
 
 Two traps worth knowing before you start, both documented with their reasons in the
 skin README: the **row must not be repeated** in the profile's own patch layer, and
@@ -106,6 +110,10 @@ curl -s -o /dev/null -w '%{http_code} %{content_type}\n' \
 - Update the README when behaviour changes: the READMEs are the documentation, not
   a summary of it.
 - If the change is user-visible, say what to look at in the app.
+
+The template GitHub fills in for you asks for the same three things: the reason,
+which suite proves it, and what to look at. It is a file in this repository, so
+`test/repo.mjs` guards it like everything else in `.github/`.
 
 ## Bugs and questions
 

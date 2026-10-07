@@ -64,11 +64,14 @@ node plugins/souls-hud/test/preview.mjs          # rebuilds preview/preview.html
 node plugins/builder-hud/test/icon.mjs --check   # the card artwork matches the renderer
 node plugins/builder-hud/test/icon.mjs --shape octagon --device sun \
   --out plugins/souls-hud/icon.svg --check         # the skin's row icon
+node test/repo.mjs                               # the .github files, and every link in the docs
 ```
 
 `harness.mjs` drives the routes through a copy of the real request matcher, the
 settings form is mounted three times (shipped, configured, empty), and the upload
-path is exercised against hostile SVGs. No dependencies — plain Node and, for the
+path is exercised against hostile SVGs. `repo.mjs` guards the repository's own
+metadata: the issue forms, the sponsor button, and every link, anchor and command
+the documents hand a reader. No dependencies — plain Node and, for the
 browser-side tests, a local Chrome.
 
 ## Support
