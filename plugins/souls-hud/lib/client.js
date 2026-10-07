@@ -155,10 +155,6 @@ window.__ModuleLoader__.load({
         "preview.peak": "高峰",
         "preview.offpeak": "低谷",
         "preview.caption": "{theme} · {tariff}",
-        "preview.gaugeLive": "此刻 {value} 新 token/min。",
-        "preview.gaugeSample": "预览环固定画 {percent}%。",
-        "preview.noReading": "",
-        "preview.themeNote": "",
 
         // --- badge ------------------------------------------------------------
         "section.badge": "徽章",
@@ -298,9 +294,7 @@ window.__ModuleLoader__.load({
 
         // --- support ----------------------------------------------------------
         // The tip jar appears only when a channel in `SUPPORT` is filled in, and it
-        // is the heading and the buttons — nothing else. The free promise lives on
-        // the row's own settings form, which is always shown.
-        "page.free": "插件完全免费，没有付费版，也没有需要解锁的功能。",
+        // is the heading and the buttons — nothing else.
         "section.support": "支持作者",
         "support.qrHint": "扫码打赏",
         // A code is app-specific in a way a URL never is: the WeChat 赞赏码 cannot be
@@ -339,10 +333,6 @@ window.__ModuleLoader__.load({
         "preview.peak": "Peak",
         "preview.offpeak": "Off-peak",
         "preview.caption": "{theme} · {tariff}",
-        "preview.gaugeLive": "Right now {value} new tok/min.",
-        "preview.gaugeSample": "The preview ring is fixed at {percent}%.",
-        "preview.noReading": "",
-        "preview.themeNote": "",
 
         // --- badge ------------------------------------------------------------
         "section.badge": "Badge",
@@ -481,7 +471,6 @@ window.__ModuleLoader__.load({
         "tariff.off": "tariff not shown",
 
         // --- support ----------------------------------------------------------
-        "page.free": "The plugin is free: no paid edition, and no feature to unlock.",
         "section.support": "Support the author",
         "support.qrHint": "scan to tip",
         "support.qrOpen": "If it will not scan, click the code to open the full-size image.",
@@ -1721,17 +1710,10 @@ window.__ModuleLoader__.load({
         // It used to draw the live reading, which is a bad preview twice over: a
         // busy session pegs the ring at 100% (so it shows nothing about the
         // gauge), and an idle one leaves it empty (so it shows even less). 60% is
-        // the fill that shows the most — length, colour, the lit edge — and the
-        // live value is printed under the board instead, where a number belongs.
+        // the fill that shows the most — length, colour, the lit edge.
         var SAMPLE_GAUGE = 0.6;
         var gaugeRatio = SAMPLE_GAUGE;
         var cells = previewCells(device, shape, material, customMarkup, gaugeRatio);
-        var gaugeNote =
-          t("preview.gaugeSample", { percent: Math.round(gaugeRatio * 100) }) +
-          " " +
-          (live && live.available
-            ? t("preview.gaugeLive", { value: rate(live.tokensPerMin) })
-            : t("preview.noReading"));
         var preview = cells
           ? React.createElement(
               "div",
@@ -1767,7 +1749,6 @@ window.__ModuleLoader__.load({
                   );
                 }),
               ),
-              React.createElement("div", { style: hintStyle }, gaugeNote),
             )
           : React.createElement("div", { style: hintStyle }, t("preview.unavailable"));
 
@@ -1776,12 +1757,6 @@ window.__ModuleLoader__.load({
           { style: { paddingTop: "2px" } },
 
           React.createElement("div", { style: introStyle }, t("page.intro")),
-          React.createElement(
-            "div",
-            { style: Object.assign({}, introStyle, { paddingTop: "2px" }) },
-            t("page.free"),
-          ),
-
           // 1. What you are editing.
           section(
             t("section.preview"),
@@ -1790,7 +1765,6 @@ window.__ModuleLoader__.load({
               "div",
               { style: { display: "flex", flexDirection: "column", gap: "6px", paddingTop: "6px" } },
               preview,
-              hintLine(t("preview.themeNote")),
             ),
             "preview",
           ),

@@ -76,8 +76,7 @@ browser-side tests, a local Chrome.
 
 ## Support
 
-The plugin is free: no paid edition, no licence key, and nothing to unlock. The
-settings page says so in as many words.
+The plugin is free: no paid edition, no licence key, and nothing to unlock.
 
 If it earns its place in your sidebar, the tip jar is **in the app**, on
 BuilderHUD's card page — a WeChat 赞赏码 for readers in China, and

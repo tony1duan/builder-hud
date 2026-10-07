@@ -90,8 +90,8 @@ Anyone who wants it on their own machine can upload it as a device.
 ## Support
 
 Both packages are free — the bundle and the skin. There is no paid edition, no
-licence key, and no feature to unlock, and the settings page says so in as many
-words; the donations exist to pay for maintenance, not to open a door.
+licence key, and no feature to unlock; the donations exist to pay for maintenance,
+not to open a door.
 
 If the HUD earns its place in your sidebar, the tip jar is on **this bundle's
 card page** — the skin registers it into `plugins.detail.section`, so it sits one

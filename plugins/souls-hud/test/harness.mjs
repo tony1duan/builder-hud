@@ -971,15 +971,14 @@ for (const channel of support.channels) {
     throw new Error(`harness: support channel ${channel.id} has an unknown kind ${channel.kind}`)
   }
 }
-for (const key of ['page.free', 'section.support', 'support.qrHint']) {
+for (const key of ['section.support', 'support.qrHint']) {
   assert.ok(dict.zh[key] && dict.en[key], `the dictionary must carry ${key} for the support section`)
 }
 // The panel is the heading and the buttons. It used to carry a second sentence
 // explaining that a tip buys nothing, which only repeated the heading — in two
-// languages, on the page where the buttons are the only thing to do. The promise
-// itself is unchanged and still asserted: `page.free` on the row's settings form.
-// A deny-list on purpose, like the favicon rule: bringing the sentence back is a
-// decision to take deliberately, not a key to re-add quietly.
+// languages, on the page where the buttons are the only thing to do. A deny-list on
+// purpose, like the favicon rule: bringing the sentence back is a decision to take
+// deliberately, not a key to re-add quietly.
 for (const key of ['section.supportHint', 'support.thanks']) {
   assert.ok(!dict.zh[key] && !dict.en[key], `the support panel is heading-only: ${key} must not come back`)
 }

@@ -665,10 +665,10 @@ if (board) {
   delete window.__DSH_SOULS_HUD_NAV__
 }
 
-// The preview's ring is a *sample*, not the live reading: a pegged live ring
-// shows nothing about the gauge, and its value is printed underneath instead.
-ok(flat.includes('The preview ring is fixed at 60%'), 'the preview must say the ring is a sample')
-ok(flat.includes('Right now 3.4k new tok/min.'), 'the live value belongs under the board, with its unit')
+// The preview's ring is a *sample*, not the live reading: a pegged live ring shows
+// nothing about the gauge, and an empty one shows even less. The board used to say
+// so in a caption; the fill speaks for itself now.
+ok(!flat.includes('fixed at 60%'), 'the board must not caption itself')
 
 // The row's one-liner leads with what the badge is.
 const summaryText = textOf(summary)
@@ -709,12 +709,10 @@ const SUPPORT_LABELS = { wechat: 'WeChat tip code', kofi: 'Ko-fi' }
 const configured = (channel) =>
   Boolean((channel.kind === 'link' && channel.url) || (channel.kind === 'qr' && channel.file))
 
-// The row's settings form no longer carries the tip jar — that moved out to the
-// bundle's page — so the promise stays here and the buttons do not.
-ok(
-  flat.includes('The plugin is free: no paid edition'),
-  'the settings form must still say the plugin is free',
-)
+// The row's settings form carries neither the tip jar nor a line about what the
+// plugin costs: the buttons moved out to the bundle's page, and the free promise is
+// stated in the READMEs rather than in the form. What is asserted here is the part
+// that could actually be violated — the tip jar must not be in the row.
 ok(
   !flat.includes('Support the author'),
   'the tip jar must not be inside the row, where a 200 px code drowned the settings',

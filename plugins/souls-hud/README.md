@@ -586,9 +586,9 @@ the badge is worse than none. Two details make it work:
   inside a light page can still be dark), and each cell's metal stops are read from
   the stylesheet *for that cell's theme* — the second screenshot row below is on a
   light page and the first on a dark one, and the two rows are identical;
-- when the burn meter has no reading yet the board draws a sample fill and says so
-  rather than showing an empty ring, because an empty gauge in a preview teaches
-  nothing.
+- the board always draws a **sample** fill rather than the live reading: a busy
+  session pegs the ring at 100% and an idle one leaves it empty, so neither teaches
+  anything, and 60% is the fill that shows the most.
 
 ## Installation
 
