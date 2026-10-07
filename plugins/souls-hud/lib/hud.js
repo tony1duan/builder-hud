@@ -836,13 +836,26 @@
     plateMarkup += '<g fill="none">' + shadowBand + "</g>";
 
     // The burn gauge belongs to both silhouettes — it follows the plate it is on.
+    //
+    // It is drawn twice on the same path: a coloured band, and a narrow bright core
+    // riding its centre. Two strokes rather than one blurred stroke, for the reason
+    // the fractures give — a blur needs a filter, a filter needs an id, and every id
+    // in this markup has to be re-pointed by `previewSvg`. It is also what makes a
+    // lit arc read as *glowing* rather than as a coloured line: the band keeps the
+    // tariff colour, which has to stay saturated to separate from a warm plate, and
+    // the core carries the brightness. Peak is therefore a near-white core inside an
+    // orange band rather than a paler orange, which would merge back into the bronze.
+    //
+    // Both carry the same dash, and `paintGauge` moves both, so the core cannot
+    // drift off the band it is lighting.
     var gauge = gaugeAttributes(round ? "round" : "octagon", opts.gauge || 0);
-    plateMarkup +=
-      '<path class="dsh-sh__gauge" fill="none" stroke-linecap="round" d="' + gauge.d +
+    var gaugeDash =
       '" stroke-dasharray="' + gauge.dasharray +
       '" stroke-dashoffset="' + gauge.dashoffset + '"' +
-      (gauge.empty ? ' data-empty="1"' : "") +
-      "/>";
+      (gauge.empty ? ' data-empty="1"' : "");
+    plateMarkup +=
+      '<path class="dsh-sh__gauge" fill="none" stroke-linecap="round" d="' + gauge.d + gaugeDash + "/>" +
+      '<path class="dsh-sh__gauge-core" fill="none" stroke-linecap="round" d="' + gauge.d + gaugeDash + "/>";
     var fieldOpening = round
       ? '<circle cx="24" cy="24" r="' + geometry.round.fieldRadius + '"/>'
       : '<polygon points="' + geometry.octagon.field + '"/>';
@@ -2187,28 +2200,34 @@
   /**
    * Point the burn gauge at a new fraction, in place.
    *
-   * The gauge is one `<path>`; re-rendering the medallion on every poll would
-   * throw away the DOM for a number that changes constantly, so only the `d`
-   * attribute moves.
+   * The gauge is two `<path>`s — the band and its bright core — and both move
+   * together; re-rendering the medallion on every poll would throw away the DOM for
+   * a number that changes constantly, so only the dash attributes move. Moving the
+   * core in the same loop is what keeps it on the band: they are the same geometry,
+   * so a reading applied to one and not the other leaves a bright filament hanging
+   * off the end of the arc.
    *
    * @param ratio - 0..1 of the medal's edge to light up.
    */
   function paintGauge(ratio) {
     if (!mark) return;
-    var path = mark.querySelector(".dsh-sh__gauge");
-    if (!path) return;
+    var paths = mark.querySelectorAll(".dsh-sh__gauge, .dsh-sh__gauge-core");
+    if (!paths.length) return;
     var next = gaugeAttributes(paintedShape, ratio);
-    // An empty gauge is faded out rather than drawn: a round cap on the dash
-    // boundary paints a dot at the path's start, which is visible as a lit point
-    // on the octagon's top-left vertex with nothing burning.
-    if (next.empty) path.setAttribute("data-empty", "1");
-    else path.removeAttribute("data-empty");
-    // The path itself never changes; only the dash slides, which is what the
-    // stylesheet's transition can animate.
-    if (path.getAttribute("stroke-dasharray") !== next.dasharray) {
-      path.setAttribute("stroke-dasharray", next.dasharray);
+    for (var i = 0; i < paths.length; i += 1) {
+      var path = paths[i];
+      // An empty gauge is faded out rather than drawn: a round cap on the dash
+      // boundary paints a dot at the path's start, which is visible as a lit point
+      // on the octagon's top-left vertex with nothing burning.
+      if (next.empty) path.setAttribute("data-empty", "1");
+      else path.removeAttribute("data-empty");
+      // The path itself never changes; only the dash slides, which is what the
+      // stylesheet's transition can animate.
+      if (path.getAttribute("stroke-dasharray") !== next.dasharray) {
+        path.setAttribute("stroke-dasharray", next.dasharray);
+      }
+      path.setAttribute("stroke-dashoffset", next.dashoffset);
     }
-    path.setAttribute("stroke-dashoffset", next.dashoffset);
   }
 
   /**

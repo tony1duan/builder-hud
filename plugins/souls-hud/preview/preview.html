@@ -446,41 +446,115 @@
 
    The coarse `data-burn` level (0–4) drives how insistent the arc looks, and the
    top level breathes. */
+/* The arc is drawn twice on the same geometry: a coloured band, and a narrow bright
+   core riding its centre. Two strokes rather than one blurred stroke, for the reason
+   the fractures give — a blur needs a filter, a filter needs an id, and every id in
+   this markup has to be re-pointed by `previewSvg`. It is also what makes a lit arc
+   read as *glowing* rather than as a coloured line: the band keeps the tariff
+   colour, which has to stay saturated to separate from a warm plate, and the core
+   carries the brightness. A paler orange would only have merged back into the
+   bronze. */
+.dsh-sh__mark {
+  --dsh-sh-band: rgba(255, 246, 222, 0.62);
+  --dsh-sh-core: #fffaf0;
+  --dsh-sh-spark: rgba(255, 236, 200, 0.55);
+}
 .dsh-sh__mark .dsh-sh__gauge {
-  stroke: rgba(255, 246, 222, 0.62);
+  stroke: var(--dsh-sh-band);
   stroke-width: 1.5;
-  opacity: 0.85;
+  /* How bright the band is. The breath rides on `opacity`, which multiplies this,
+     so one keyframe set gives every burn level a breath of its own amplitude. */
+  stroke-opacity: 0.85;
   /* The gauge is one full-length path whose visible arc is a dash: the fill is
      `stroke-dashoffset`, which CSS can animate. Rewriting the path's `d` on every
      poll — the first implementation — cannot be transitioned and snapped. */
   transition: stroke-dashoffset 1200ms cubic-bezier(0.25, 0.8, 0.3, 1),
-    stroke 600ms linear, opacity 400ms linear;
+    stroke 600ms linear, stroke-opacity 400ms linear, opacity 400ms linear,
+    filter 500ms linear;
+}
+/* The core's *width* barely moves with the burn level: a brighter core reads as
+   hotter than a thicker one, and a thick white line stops looking like a filament
+   and starts looking like a second arc. Its brightness is `stroke-opacity`, and it
+   starts invisible so a level that does not name it shows only the band. */
+.dsh-sh__mark .dsh-sh__gauge-core {
+  stroke: var(--dsh-sh-core);
+  stroke-width: 0.55;
+  stroke-opacity: 0;
+  transition: stroke 600ms linear, stroke-opacity 500ms linear;
 }
 /* Peak is *orange-red*, not amber: the rim is amber already (bronze and gold are
    both warm metals), so an amber ring merged into it. The redder hue both
    separates the arc from the plate and says what the window means. */
-.dsh-sh__mark[data-tariff="peak"] .dsh-sh__gauge {
-  stroke: #ff8b33;
-  filter: drop-shadow(0 0 1.6px rgba(255, 108, 40, 0.85));
+.dsh-sh__mark[data-tariff="peak"] {
+  --dsh-sh-band: #ff9440;
+  --dsh-sh-core: #fff6e6;
+  --dsh-sh-spark: rgba(255, 122, 48, 0.92);
 }
-.dsh-sh__mark[data-tariff="offpeak"] .dsh-sh__gauge {
-  stroke: #9fe3ff;
-  filter: drop-shadow(0 0 1.4px rgba(120, 210, 255, 0.75));
+.dsh-sh__mark[data-tariff="offpeak"] {
+  --dsh-sh-band: #9fe3ff;
+  --dsh-sh-core: #f0fbff;
+  --dsh-sh-spark: rgba(120, 210, 255, 0.8);
+}
+/* How insistent a lit arc is, and how fast it breathes.
+ *
+ * Level 0 is the empty gauge, so every level here is *lit*. All of them glow and
+ * breathe: an earlier cut only glowed from level 3 up and only breathed at level 4,
+ * which left a ring looking flat exactly when it first appeared. The period
+ * shortens as the burn climbs, so a working medal breathes faster than an idle one,
+ * and the glow stacks a second, wider drop-shadow so the light has somewhere to
+ * fall off. */
+.dsh-sh__mark[data-burn="1"] .dsh-sh__gauge,
+.dsh-sh__mark[data-burn="1"] .dsh-sh__gauge-core {
+  animation: dsh-sh-breathe 3.4s ease-in-out infinite;
+}
+.dsh-sh__mark[data-burn="1"] .dsh-sh__gauge {
+  filter: drop-shadow(0 0 1.2px var(--dsh-sh-spark));
+}
+.dsh-sh__mark[data-burn="1"] .dsh-sh__gauge-core {
+  stroke-opacity: 0.5;
+}
+.dsh-sh__mark[data-burn="2"] .dsh-sh__gauge,
+.dsh-sh__mark[data-burn="2"] .dsh-sh__gauge-core {
+  animation: dsh-sh-breathe 3s ease-in-out infinite;
 }
 .dsh-sh__mark[data-burn="2"] .dsh-sh__gauge {
   stroke-width: 1.7;
-  opacity: 0.95;
+  stroke-opacity: 0.95;
+  filter: drop-shadow(0 0 1.8px var(--dsh-sh-spark));
+}
+.dsh-sh__mark[data-burn="2"] .dsh-sh__gauge-core {
+  stroke-opacity: 0.68;
+}
+.dsh-sh__mark[data-burn="3"] .dsh-sh__gauge,
+.dsh-sh__mark[data-burn="3"] .dsh-sh__gauge-core {
+  animation: dsh-sh-breathe 2.6s ease-in-out infinite;
 }
 .dsh-sh__mark[data-burn="3"] .dsh-sh__gauge {
   stroke-width: 1.9;
-  opacity: 1;
-  filter: drop-shadow(0 0 2.2px currentColor);
+  stroke-opacity: 1;
+  filter: drop-shadow(0 0 2.4px var(--dsh-sh-spark)) drop-shadow(0 0 5px var(--dsh-sh-spark));
+}
+.dsh-sh__mark[data-burn="3"] .dsh-sh__gauge-core {
+  stroke-opacity: 0.84;
+}
+.dsh-sh__mark[data-burn="4"] .dsh-sh__gauge,
+.dsh-sh__mark[data-burn="4"] .dsh-sh__gauge-core {
+  animation: dsh-sh-breathe 2.2s ease-in-out infinite;
 }
 .dsh-sh__mark[data-burn="4"] .dsh-sh__gauge {
   stroke-width: 2.1;
-  opacity: 1;
-  filter: drop-shadow(0 0 2.8px rgba(255, 120, 48, 0.9));
-  animation: dsh-sh-ember 1.8s ease-in-out infinite;
+  stroke-opacity: 1;
+  filter: drop-shadow(0 0 2.8px var(--dsh-sh-spark)) drop-shadow(0 0 7px var(--dsh-sh-spark));
+}
+.dsh-sh__mark[data-burn="4"] .dsh-sh__gauge-core {
+  stroke-opacity: 1;
+}
+/* At peak the light reaches one step further, at the levels where the medal is
+   already burning: the window that costs the most should look like it. */
+.dsh-sh__mark[data-tariff="peak"][data-burn="3"] .dsh-sh__gauge,
+.dsh-sh__mark[data-tariff="peak"][data-burn="4"] .dsh-sh__gauge {
+  filter: drop-shadow(0 0 2.6px var(--dsh-sh-spark)) drop-shadow(0 0 7px var(--dsh-sh-spark))
+    drop-shadow(0 0 14px var(--dsh-sh-spark));
 }
 /* An empty gauge draws nothing.
  *
@@ -490,16 +564,20 @@
  * was burning. Fading it out keeps the round cap for the lit arc.
  *
  * After the level rules on purpose: they share this selector's specificity, so the
- * order is what decides. */
-.dsh-sh__mark .dsh-sh__gauge[data-empty="1"] {
+ * order is what decides. `animation: none` is the belt to that brace — an arc with
+ * nothing burning must not breathe either, or it would pulse in place. */
+.dsh-sh__mark .dsh-sh__gauge[data-empty="1"],
+.dsh-sh__mark .dsh-sh__gauge-core[data-empty="1"] {
   opacity: 0;
+  animation: none;
 }
 
-/* The ember breathes at the top level; the arc itself stays put. */
-@keyframes dsh-sh-ember {
+/* The breath, for every lit level. The amplitude is the level's own
+   `stroke-opacity`, because `opacity` multiplies it. */
+@keyframes dsh-sh-breathe {
   0%,
   100% {
-    opacity: 0.78;
+    opacity: 0.72;
   }
   50% {
     opacity: 1;
@@ -804,7 +882,11 @@ body:not([data-ds-dark-theme]) .dsh-sh__read .dsh-sh__detail {
   opacity: 0.66;
 }
 
-/* Respect a user who asked for less motion. */
+/* Respect a user who asked for less motion.
+ *
+ * Every animated selector in this file is listed, by hand, and `test/harness.mjs`
+ * fails if one is missing: an animation that ignores the preference is invisible to
+ * everyone who does not need it and obvious to everyone who does. */
 @media (prefers-reduced-motion: reduce) {
   #dsh-souls-hud,
   .dsh-sh__fill,
@@ -814,7 +896,14 @@ body:not([data-ds-dark-theme]) .dsh-sh__read .dsh-sh__detail {
   .dsh-sh__row.is-critical .dsh-sh__fill,
   .dsh-sh__row.is-changed .dsh-sh__fill,
   .dsh-sh__mark[data-tariff="peak"][data-burn="4"] .dsh-sh__heat,
-  .dsh-sh__mark[data-burn="4"] .dsh-sh__gauge {
+  .dsh-sh__mark[data-burn="1"] .dsh-sh__gauge,
+  .dsh-sh__mark[data-burn="1"] .dsh-sh__gauge-core,
+  .dsh-sh__mark[data-burn="2"] .dsh-sh__gauge,
+  .dsh-sh__mark[data-burn="2"] .dsh-sh__gauge-core,
+  .dsh-sh__mark[data-burn="3"] .dsh-sh__gauge,
+  .dsh-sh__mark[data-burn="3"] .dsh-sh__gauge-core,
+  .dsh-sh__mark[data-burn="4"] .dsh-sh__gauge,
+  .dsh-sh__mark[data-burn="4"] .dsh-sh__gauge-core {
     animation: none !important;
   }
 }
@@ -1871,13 +1960,26 @@ body:not([data-ds-dark-theme]) .dsh-sh__read .dsh-sh__detail {
     plateMarkup += '<g fill="none">' + shadowBand + "</g>";
 
     // The burn gauge belongs to both silhouettes — it follows the plate it is on.
+    //
+    // It is drawn twice on the same path: a coloured band, and a narrow bright core
+    // riding its centre. Two strokes rather than one blurred stroke, for the reason
+    // the fractures give — a blur needs a filter, a filter needs an id, and every id
+    // in this markup has to be re-pointed by `previewSvg`. It is also what makes a
+    // lit arc read as *glowing* rather than as a coloured line: the band keeps the
+    // tariff colour, which has to stay saturated to separate from a warm plate, and
+    // the core carries the brightness. Peak is therefore a near-white core inside an
+    // orange band rather than a paler orange, which would merge back into the bronze.
+    //
+    // Both carry the same dash, and `paintGauge` moves both, so the core cannot
+    // drift off the band it is lighting.
     var gauge = gaugeAttributes(round ? "round" : "octagon", opts.gauge || 0);
-    plateMarkup +=
-      '<path class="dsh-sh__gauge" fill="none" stroke-linecap="round" d="' + gauge.d +
+    var gaugeDash =
       '" stroke-dasharray="' + gauge.dasharray +
       '" stroke-dashoffset="' + gauge.dashoffset + '"' +
-      (gauge.empty ? ' data-empty="1"' : "") +
-      "/>";
+      (gauge.empty ? ' data-empty="1"' : "");
+    plateMarkup +=
+      '<path class="dsh-sh__gauge" fill="none" stroke-linecap="round" d="' + gauge.d + gaugeDash + "/>" +
+      '<path class="dsh-sh__gauge-core" fill="none" stroke-linecap="round" d="' + gauge.d + gaugeDash + "/>";
     var fieldOpening = round
       ? '<circle cx="24" cy="24" r="' + geometry.round.fieldRadius + '"/>'
       : '<polygon points="' + geometry.octagon.field + '"/>';
@@ -3222,28 +3324,34 @@ body:not([data-ds-dark-theme]) .dsh-sh__read .dsh-sh__detail {
   /**
    * Point the burn gauge at a new fraction, in place.
    *
-   * The gauge is one `<path>`; re-rendering the medallion on every poll would
-   * throw away the DOM for a number that changes constantly, so only the `d`
-   * attribute moves.
+   * The gauge is two `<path>`s — the band and its bright core — and both move
+   * together; re-rendering the medallion on every poll would throw away the DOM for
+   * a number that changes constantly, so only the dash attributes move. Moving the
+   * core in the same loop is what keeps it on the band: they are the same geometry,
+   * so a reading applied to one and not the other leaves a bright filament hanging
+   * off the end of the arc.
    *
    * @param ratio - 0..1 of the medal's edge to light up.
    */
   function paintGauge(ratio) {
     if (!mark) return;
-    var path = mark.querySelector(".dsh-sh__gauge");
-    if (!path) return;
+    var paths = mark.querySelectorAll(".dsh-sh__gauge, .dsh-sh__gauge-core");
+    if (!paths.length) return;
     var next = gaugeAttributes(paintedShape, ratio);
-    // An empty gauge is faded out rather than drawn: a round cap on the dash
-    // boundary paints a dot at the path's start, which is visible as a lit point
-    // on the octagon's top-left vertex with nothing burning.
-    if (next.empty) path.setAttribute("data-empty", "1");
-    else path.removeAttribute("data-empty");
-    // The path itself never changes; only the dash slides, which is what the
-    // stylesheet's transition can animate.
-    if (path.getAttribute("stroke-dasharray") !== next.dasharray) {
-      path.setAttribute("stroke-dasharray", next.dasharray);
+    for (var i = 0; i < paths.length; i += 1) {
+      var path = paths[i];
+      // An empty gauge is faded out rather than drawn: a round cap on the dash
+      // boundary paints a dot at the path's start, which is visible as a lit point
+      // on the octagon's top-left vertex with nothing burning.
+      if (next.empty) path.setAttribute("data-empty", "1");
+      else path.removeAttribute("data-empty");
+      // The path itself never changes; only the dash slides, which is what the
+      // stylesheet's transition can animate.
+      if (path.getAttribute("stroke-dasharray") !== next.dasharray) {
+        path.setAttribute("stroke-dasharray", next.dasharray);
+      }
+      path.setAttribute("stroke-dashoffset", next.dashoffset);
     }
-    path.setAttribute("stroke-dashoffset", next.dashoffset);
   }
 
   /**

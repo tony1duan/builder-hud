@@ -340,6 +340,83 @@ const html = `<!doctype html>
     'linecap is ' + litGauge.getAttribute('stroke-linecap'));
   gaugeHost.remove();
 
+  // --- the arc's bright core -----------------------------------------------------
+  //
+  // The gauge is two <path>s on one geometry: a coloured band, and a narrow bright
+  // core riding its centre. Nothing structural holds them together — they are two
+  // elements in a string — so if a reading is applied to one and not the other, the
+  // core is left hanging off the end of the band it is meant to light. Hence the
+  // same-dash check; the brightness checks below are the other half, in the
+  // stylesheet's own terms.
+  function coreAttrOf(markup, name) {
+    var at = markup.indexOf('<path class="dsh-sh__gauge-core"');
+    if (at === -1) return null;
+    var key = ' ' + name + '="';
+    var found = markup.indexOf(key, at);
+    if (found === -1) return null;
+    var from = found + key.length;
+    return markup.slice(from, markup.indexOf('"', from));
+  }
+  check('the arc carries a bright core', coreAttrOf(halfGauge, 'd') !== null, 'no core path was rendered');
+  check('the core rides the band exactly',
+    coreAttrOf(halfGauge, 'd') === gaugePathOf(halfGauge) &&
+      coreAttrOf(halfGauge, 'stroke-dasharray') === gaugeAttrOf(halfGauge, 'stroke-dasharray') &&
+      coreAttrOf(halfGauge, 'stroke-dashoffset') === gaugeAttrOf(halfGauge, 'stroke-dashoffset'),
+    'the core and the band disagree');
+  check('an empty arc empties its core as well',
+    coreAttrOf(idleGauge, 'data-empty') === '1' && coreAttrOf(litFrame, 'data-empty') === null,
+    'the core was not told the arc is empty');
+
+  var coreHost = document.createElement('div');
+  coreHost.className = 'dsh-sh__mark';
+  coreHost.setAttribute('data-material', 'bronze');
+  coreHost.setAttribute('data-device', 'whale');
+  coreHost.setAttribute('data-tariff', 'peak');
+  coreHost.innerHTML = litFrame;
+  document.body.appendChild(coreHost);
+  var restCore = getComputedStyle(coreHost.querySelector('.dsh-sh__gauge-core'));
+  check('the core is a hairline rather than a second arc', parseFloat(restCore.strokeWidth) < 1, restCore.strokeWidth);
+  check('and is dark until a burn level lights it', restCore.strokeOpacity === '0', restCore.strokeOpacity);
+
+  // Every lit level breathes — the earlier cut only breathed at the top level — and
+  // the band and the core breathe *together*, because a steady band under a pulsing
+  // filament reads as a rendering fault rather than as breathing.
+  //
+  // A fresh element per level, on purpose: stroke-opacity is transitioned, and a
+  // computed style read in the same tick as the attribute change reports the value
+  // the transition is *leaving*, which is how the first cut of this check managed to
+  // measure zero at every level while the rules were all correct.
+  var quiet = [];
+  var coreOpacity = {};
+  for (var level = 1; level <= 4; level += 1) {
+    var levelHost = document.createElement('div');
+    levelHost.className = 'dsh-sh__mark';
+    levelHost.setAttribute('data-material', 'bronze');
+    levelHost.setAttribute('data-device', 'whale');
+    levelHost.setAttribute('data-tariff', 'peak');
+    levelHost.setAttribute('data-burn', String(level));
+    levelHost.innerHTML = litFrame;
+    document.body.appendChild(levelHost);
+    var bandAt = getComputedStyle(levelHost.querySelector('.dsh-sh__gauge'));
+    var coreAt = getComputedStyle(levelHost.querySelector('.dsh-sh__gauge-core'));
+    if (bandAt.animationName !== 'dsh-sh-breathe') quiet.push('band@' + level + '=' + bandAt.animationName);
+    if (coreAt.animationName !== 'dsh-sh-breathe') quiet.push('core@' + level + '=' + coreAt.animationName);
+    coreOpacity[level] = Number(coreAt.strokeOpacity);
+    levelHost.remove();
+  }
+  check('every lit level breathes, band and core together', quiet.length === 0, quiet.join(', '));
+  check('the core brightens as the burn climbs',
+    coreOpacity[1] > 0 && coreOpacity[2] > coreOpacity[1] && coreOpacity[3] > coreOpacity[2] &&
+      coreOpacity[4] > coreOpacity[3],
+    JSON.stringify(coreOpacity));
+  // The empty rule is written after the level rules precisely so it wins this tie.
+  coreHost.setAttribute('data-burn', '4');
+  coreHost.innerHTML = emptyFrame;
+  check('an arc with nothing burning does not breathe, even at a burning level',
+    getComputedStyle(coreHost.querySelector('.dsh-sh__gauge')).animationName === 'none',
+    'the empty gauge is animating');
+  coreHost.remove();
+
   // --- can the badge actually be clicked? --------------------------------------
   //
   // Not "does the handler call the API" — that was fine and the badge still did

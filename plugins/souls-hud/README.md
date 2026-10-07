@@ -240,6 +240,25 @@ can hide the other:
 | the **length** of the lit arc | how fast tokens are being spent right now |
 | the **colour** of that arc | the tariff window: amber on peak hours, cool blue off-peak |
 
+The arc is drawn twice on the same geometry: a coloured **band**, and a thin bright
+**core** riding its centre. Two strokes rather than one blurred stroke, for the reason
+the fractures give — a blur needs a filter, a filter needs an id, and every id in this
+markup has to be re-pointed by `previewSvg`. It is also what lets peak be bright *and*
+legible at once: the band keeps the saturated orange that separates the arc from a warm
+plate, and the brightness is the near-white core, where a paler orange band would only
+have merged back into the bronze.
+
+Every lit level **glows and breathes**, and the breath quickens as the burn climbs —
+3.4 s at level 1 down to 2.2 s at level 4. The level sets the band's width, its
+`stroke-opacity` and the core's; the breath multiplies those with `opacity`, so one
+keyframe set gives every level an amplitude of its own. **Level 0 is the empty gauge**,
+so an arc with nothing burning neither glows nor breathes. A list of selectors kept by
+hand is a list that gets forgotten, so `test/harness.mjs` reads every animation out of
+the stylesheet and fails if one is missing from the `prefers-reduced-motion` block.
+`test/upload.mjs` drives the rest in a real browser: the core rides the band's exact
+dash, every lit level breathes, the core brightens with the burn, and the empty arc is
+dark and still.
+
 The rate is measured on the host, from `@deepseek-ai/dsh-token-meter`'s
 `tokenUsage` projection — that session's ledger, which only grows, so a
 difference over time is a rate and a compaction cannot bend it. The host samples
@@ -258,6 +277,9 @@ off-peak does not:
 | off-peak, idle | the calm medal: metal, shadow, fractures |
 | peak, idle | a warm wash over the plate and the recessed field, firelight standing in every fracture, a glow where the rim meets the field, and the frame slightly brighter and more saturated |
 | peak, burning | the same, turned up with the burn level, with the ring lit on top |
+
+At peak the ring's glow also reaches one step further than off-peak at the same burn
+level — a third, wider drop-shadow — so the window that costs the most looks like it.
 
 It is **one generic overlay** (`.dsh-sh__heat`), drawn once by the renderer and
 gated entirely from the stylesheet on `data-tariff` and `data-burn` — 0.52 at

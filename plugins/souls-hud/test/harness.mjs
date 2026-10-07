@@ -844,6 +844,44 @@ assert.ok(hudCss.includes('#dsh-souls-hud'), 'stylesheet targets the HUD root')
 assert.ok(hudCss.includes('pointer-events: none'), 'the HUD must be click-through')
 assert.ok(hudJs.includes('/state.json'), 'renderer must poll the state route')
 
+// --- no animation escapes `prefers-reduced-motion` ---------------------------
+//
+// The reduced-motion block is a list of selectors maintained by hand, and nothing
+// about forgetting one is visible to whoever forgets it: the animation simply keeps
+// running for the people who asked it not to. So every selector that turns an
+// animation *on* is read out of the stylesheet and looked for in that block — which
+// is what makes the block a rule rather than a habit.
+{
+  // Comments first: a brace inside one would be read as a rule.
+  const css = hudCss.replace(/\/\*[\s\S]*?\*\//g, '')
+  const reduced = /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{([\s\S]*?)\n\}/.exec(css)
+  assert.ok(reduced, 'hud.css must carry a prefers-reduced-motion block')
+
+  /** Selectors the block silences, the way the block itself is written. */
+  const silenced = new Set()
+  for (const rule of reduced[1].matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    if (!/(^|[;\s])animation\s*:\s*none/.test(rule[2])) continue
+    for (const selector of rule[1].split(',')) silenced.add(selector.trim().replace(/\s+/g, ' '))
+  }
+
+  /** Selectors that set an animation outside that block. */
+  const outside = css.replace(/@media[^{]*\{[\s\S]*?\n\}/g, '')
+  const animated = []
+  for (const rule of outside.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const animation = /(^|[;\s])animation\s*:\s*([^;]+)/.exec(rule[2])
+    if (animation === null || /^\s*none/.test(animation[2])) continue
+    for (const selector of rule[1].split(',')) {
+      const trimmed = selector.trim().replace(/\s+/g, ' ')
+      if (trimmed !== '') animated.push(trimmed)
+    }
+  }
+
+  assert.ok(animated.length > 0, 'hud.css must animate something, or this check proves nothing')
+  for (const selector of animated) {
+    assert.ok(silenced.has(selector), `hud.css animates "${selector}" even when the user asks for less motion`)
+  }
+}
+
 // --- the settings text is globalized, and the two dictionaries agree ---------
 //
 // The settings form's copy lives in `lib/client.js` as one table with a `zh` and
