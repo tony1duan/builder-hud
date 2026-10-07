@@ -26,6 +26,7 @@
     "data",
     "assets",
     "locale",
+    "icon.svg",
     "README.md"
   ],
   "keywords": [
@@ -50,6 +51,7 @@
     "node": ">=20"
   },
   "license": "MIT",
+  "icon": "./icon.svg",
   "funding": [
     {
       "type": "ko-fi",

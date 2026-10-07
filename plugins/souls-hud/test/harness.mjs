@@ -990,6 +990,13 @@ if (configuredLinks.length > 0) {
       `package.json files lists ${entry}, which does not exist`,
     )
   }
+  // The row's artwork, which the Plugins page reads from the manifest: a declared
+  // icon that is not in the tarball is a broken image on every install.
+  assert.ok(typeof pkg.icon === 'string' && pkg.icon !== '', 'the manifest must name an icon')
+  assert.ok(
+    existsSync(new URL(`../${pkg.icon.replace(/^\.\//, '')}`, import.meta.url)),
+    `the manifest icon ${pkg.icon} does not exist`,
+  )
   for (const required of ['lib/host.js', 'lib/client.js', 'lib/hud.js', 'lib/hud.css', 'data/holidays-cn.json']) {
     assert.ok(
       new URL('../' + required, import.meta.url) && existsSync(new URL(`../${required}`, import.meta.url)),

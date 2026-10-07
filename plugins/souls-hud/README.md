@@ -63,9 +63,12 @@ package:
   `<script>` and mounts the HUD through that client half.
 
 So: the bundle carries the card copy (`locale/*.json`), the patch row, and the
-icon; this package carries the host half, the renderer, the settings form and
-*its* copy. The bundle depends on it, so installing the bundle installs the
-component.
+**card's** icon; this package carries the host half, the renderer, the settings form,
+*its* copy — and its **own** `icon.svg`, which is what the Plugins page draws beside
+this row. The two are the same drawing in two badges: the card is the default round
+medal with the whale, the row is the cut-corner plate with the sun. Both come out of
+`../builder-hud/test/icon.mjs`, which is why they can never drift from the renderer.
+The bundle depends on it, so installing the bundle installs the component.
 
 ## The settings page
 
@@ -712,6 +715,8 @@ node plugins/souls-hud/test/form.mjs           # renders the settings page in No
 node plugins/souls-hud/test/upload.mjs        # the upload path, driven in headless Chrome
 node plugins/souls-hud/test/devices.mjs --check # assets/devices matches the renderer
 node plugins/builder-hud/test/icon.mjs --check # the card artwork matches this renderer
+node plugins/builder-hud/test/icon.mjs --shape octagon --device sun \
+  --out plugins/souls-hud/icon.svg --check     # this skin's row icon
 node plugins/souls-hud/test/preview.mjs       # rebuilds preview/preview.html
 node plugins/souls-hud/test/preview.mjs --live # …with the running app's real numbers
 ```

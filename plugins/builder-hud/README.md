@@ -59,17 +59,26 @@ To install from a checkout instead, link both packages into the profile's
 `node_modules` (this package and `../souls-hud`) and keep the same profile
 manifest.
 
-## The card's artwork
+## The artwork: two icons, one generator
 
-`icon.svg` reaches the card as a base64 `data:` URI inside an `<img src>`, so it
+An icon reaches the Plugins page as a base64 `data:` URI inside an `<img src>`, so it
 is a document of its own: it must declare the SVG namespace, and it cannot use
-`currentColor` or a CSS custom property. It is generated from the renderer so the
+`currentColor` or a CSS custom property. Both are generated from the renderer, so a
 card cannot advertise a badge the plugin does not draw:
 
+| Icon | Badge | Command |
+| --- | --- | --- |
+| [`icon.svg`](icon.svg) — this bundle's card | round covenant medal, whale, bronze — the default badge | `node test/icon.mjs` |
+| [`../souls-hud/icon.svg`](../souls-hud/icon.svg) — the skin's row | cut-corner plate, sun struck into the field | `node test/icon.mjs --shape octagon --device sun --out ../souls-hud/icon.svg` |
+
 ```sh
-node test/icon.mjs           # regenerate
-node test/icon.mjs --check   # verify the committed file is current and drawable
+node test/icon.mjs --check   # the card is current and drawable
+node test/icon.mjs --shape octagon --device sun --out ../souls-hud/icon.svg --check
 ```
+
+`--out` is required as soon as the badge is not the default one, so a variant can
+never overwrite the card artwork; the round output is byte-identical to what this
+script has always written, which is what makes `--check` meaningful for it.
 
 ## Licensing and marks
 

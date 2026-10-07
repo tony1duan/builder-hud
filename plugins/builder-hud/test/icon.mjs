@@ -1,5 +1,10 @@
 /**
- * Generate this bundle's card artwork — `icon.svg` — from the Souls Style renderer.
+ * Generate manifest artwork — `icon.svg` — from the Souls Style renderer.
+ *
+ * Two callers: this bundle's card, which is the *default* badge (round covenant
+ * medal, whale, bronze), and the skin's own row icon, which is the octagon plate
+ * with the sun struck into it. Same script, because it is the same drawing and the
+ * same flattening problem — only the shape and the device change.
  *
  * The card's icon reaches the Plugins page as a base64 `data:` URI inside an
  * `<img src>`, so it is a **document of its own**: it must declare the SVG
@@ -17,9 +22,14 @@
  *
  * Run: node test/icon.mjs
  *      node test/icon.mjs --check
+ *      node test/icon.mjs --shape octagon --device sun --out ../souls-hud/icon.svg
+ *
+ * `--out` is required as soon as the badge is not the default one, so a variant can
+ * never overwrite the card artwork by accident.
  */
 
 import { readFileSync, writeFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
 const hud = readFileSync(new URL('../../souls-hud/lib/hud.js', import.meta.url), 'utf8')
 
@@ -122,6 +132,28 @@ function deviceTable() {
 
 const geometry = objectLiteral('var MEDALLION_GEOMETRY = ')
 const round = geometry.round
+const octagon = geometry.octagon
+
+/** Round to three decimals, the way the renderer's own helper does. */
+const round3 = (value) => Math.round(value * 1000) / 1000
+
+/**
+ * Mirror of the renderer's `insetPolygon`: scale a polygon's points towards the
+ * medal's centre, which is how the octagon gets its inner shadow band.
+ *
+ * @param points - the polygon's `x,y x,y …` string.
+ * @param factor - how far out from the centre to stay.
+ * @returns the inset polygon's points.
+ */
+function insetPolygon(points, factor) {
+  return points
+    .split(' ')
+    .map((pair) => {
+      const [x, y] = pair.split(',')
+      return `${round3(24 + (Number(x) - 24) * factor)},${round3(24 + (Number(y) - 24) * factor)}`
+    })
+    .join(' ')
+}
 const devices = deviceTable()
 const cracks = geometry.cracks
 const pits = geometry.pits
@@ -183,70 +215,124 @@ function gradient(id, colors, x1, y1, x2, y2) {
   return `<linearGradient id="${id}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">${stops}</linearGradient>`
 }
 
-const medallion =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" aria-hidden="true" focusable="false">' +
-  '<defs>' +
-  gradient('dsh-sh-plate', BRONZE_PLATE, 0.12, 0, 0.78, 1) +
-  '<radialGradient id="dsh-sh-recess" cx="0.5" cy="0.4" r="0.66">' +
-  '<stop offset="0.5" stop-color="rgba(0,0,0,0)"/>' +
-  '<stop offset="1" stop-color="rgba(0,0,0,0.5)"/>' +
-  '</radialGradient>' +
-  gradient('dsh-sh-device', BRONZE_DEVICE, 0.18, 0.05, 0.82, 1) +
-  `<clipPath id="dsh-sh-clip"><circle cx="24" cy="24" r="${round.fieldRadius}"/></clipPath>` +
-  '</defs>' +
-  // The card artwork is the *default* badge: the round covenant medal in bronze,
-  // light — same geometry the renderer builds, same default shape.
-  `<circle cx="24" cy="24" r="${round.plateRadius}" fill="url(#dsh-sh-plate)"/>` +
-  `<circle cx="24" cy="24" r="${round.plateRadius}" fill="none" stroke="rgba(24,18,6,0.85)" stroke-width="0.8"/>` +
-  `<circle cx="24" cy="24" r="${round.millRadius}" fill="none" stroke="rgba(255,246,222,0.34)" stroke-width="1.1" stroke-dasharray="0.9 1.6"/>` +
+/**
+ * The badge, flattened into a standalone document.
+ *
+ * Round is the covenant medal: circles, with the beaded edge a dashed ring.
+ * Octagon is the cut-corner plate: polygons, an inset shadow band scaled off the
+ * plate, and no beading — the two silhouettes differ in more than their outline, and
+ * the card artwork has to say which one it is showing.
+ *
+ * @param shape - `round` or `octagon`.
+ * @param deviceName - the device struck into the field.
+ * @returns the SVG text.
+ */
+function medallionFor(shape, deviceName) {
+  const isRound = shape !== 'octagon'
+  const device = devices[deviceName]
+  if (typeof device !== 'function') {
+    throw new Error(`icon: no such device ${JSON.stringify(deviceName)}`)
+  }
+  /** One field element — circle or polygon — with whatever paint it is given. */
+  const field = (paint) =>
+    isRound
+      ? `<circle cx="24" cy="24" r="${round.fieldRadius}"${paint === '' ? '' : ' ' + paint}/>`
+      : `<polygon points="${octagon.field}"${paint === '' ? '' : ' ' + paint}/>`
+
+  const plate = isRound
+    ? `<circle cx="24" cy="24" r="${round.plateRadius}" fill="url(#dsh-sh-plate)"/>` +
+      `<circle cx="24" cy="24" r="${round.plateRadius}" fill="none" stroke="rgba(24,18,6,0.85)" stroke-width="0.8"/>` +
+      `<circle cx="24" cy="24" r="${round.millRadius}" fill="none" stroke="rgba(255,246,222,0.34)" stroke-width="1.1" stroke-dasharray="0.9 1.6"/>`
+    : `<polygon points="${octagon.plate}" fill="url(#dsh-sh-plate)"/>` +
+      `<polygon points="${octagon.plate}" fill="none" stroke="rgba(24,18,6,0.85)" stroke-width="0.8"/>`
+
   // The rim's inner shadow, which the badge draws as two hairlines (see
-  // `medallionSvg`): the card has to carry it too, or the icon loses the depth
-  // that makes the badge readable at 16px.
-  `<circle cx="24" cy="24" r="${round.millRadius - 1.15}" fill="none" stroke="rgba(28,20,8,0.42)" stroke-width="1.6"/>` +
-  `<circle cx="24" cy="24" r="${round.millRadius - 2.35}" fill="none" stroke="rgba(20,14,4,0.5)" stroke-width="0.9"/>` +
-  `<circle cx="24" cy="24" r="${round.fieldRadius}" fill="#efe6cf"/>` +
-  '<g clip-path="url(#dsh-sh-clip)">' +
-  `<circle cx="24" cy="24" r="${round.fieldRadius}" fill="url(#dsh-sh-recess)"/>` +
-  // Fractures, drawn the way the renderer draws them: dark, and tapering from the
-  // rim end to the tip (`crackPaths` in `lib/hud.js`).
-  '<g fill="none" stroke="rgba(34,22,6,0.46)" stroke-linecap="round" stroke-linejoin="round">' +
-  crackMarkup(cracks) +
-  '</g>' +
-  '<g fill="rgba(40,26,8,0.44)">' +
-  pits.map(([cx, cy, r]) => `<circle cx="${cx}" cy="${cy}" r="${r}"/>`).join('') +
-  '</g></g>' +
-  `<circle cx="24" cy="24" r="${round.fieldRadius}" fill="none" stroke="rgba(255,245,220,0.5)" stroke-width="0.9"/>` +
-  // The device is fitted into the field by a plain group transform, exactly as
-  // `deviceGroup()`/`fitDevice()` do it at runtime — a nested `<svg>` is the
-  // obvious alternative and it silently vanishes inside this frame.
-  '<g>' +
-  fit(ARTBOARD, devices.whale()) +
-  '</g>' +
-  '</svg>'
+  // `medallionSvg`): the icon has to carry it too, or it loses the depth that makes
+  // the badge readable at 16px.
+  const inset = isRound
+    ? `<circle cx="24" cy="24" r="${round.millRadius - 1.15}" fill="none" stroke="rgba(28,20,8,0.42)" stroke-width="1.6"/>` +
+      `<circle cx="24" cy="24" r="${round.millRadius - 2.35}" fill="none" stroke="rgba(20,14,4,0.5)" stroke-width="0.9"/>`
+    : `<polygon points="${insetPolygon(octagon.plate, 0.945)}" fill="none" stroke="rgba(28,20,8,0.42)" stroke-width="1.6"/>` +
+      `<polygon points="${insetPolygon(octagon.plate, 0.895)}" fill="none" stroke="rgba(20,14,4,0.5)" stroke-width="0.9"/>`
+  // Each hairline carries its own `fill="none"`, so no group wrapper: the wrapper
+  // would be one byte-perfect difference away from the artwork this file has always
+  // written, and `--check` compares bytes.
+
+  return (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" aria-hidden="true" focusable="false">' +
+    '<defs>' +
+    gradient('dsh-sh-plate', BRONZE_PLATE, 0.12, 0, 0.78, 1) +
+    '<radialGradient id="dsh-sh-recess" cx="0.5" cy="0.4" r="0.66">' +
+    '<stop offset="0.5" stop-color="rgba(0,0,0,0)"/>' +
+    '<stop offset="1" stop-color="rgba(0,0,0,0.5)"/>' +
+    '</radialGradient>' +
+    gradient('dsh-sh-device', BRONZE_DEVICE, 0.18, 0.05, 0.82, 1) +
+    `<clipPath id="dsh-sh-clip">${field('')}</clipPath>` +
+    '</defs>' +
+    plate +
+    inset +
+    field('fill="#efe6cf"') +
+    '<g clip-path="url(#dsh-sh-clip)">' +
+    field('fill="url(#dsh-sh-recess)"') +
+    // Fractures, drawn the way the renderer draws them: dark, and tapering from the
+    // rim end to the tip (`crackPaths` in `lib/hud.js`).
+    '<g fill="none" stroke="rgba(34,22,6,0.46)" stroke-linecap="round" stroke-linejoin="round">' +
+    crackMarkup(cracks) +
+    '</g>' +
+    '<g fill="rgba(40,26,8,0.44)">' +
+    pits.map(([cx, cy, r]) => `<circle cx="${cx}" cy="${cy}" r="${r}"/>`).join('') +
+    '</g></g>' +
+    field('fill="none" stroke="rgba(255,245,220,0.5)" stroke-width="0.9"') +
+    // The device is fitted into the field by a plain group transform, exactly as
+    // `deviceGroup()`/`fitDevice()` do it at runtime — a nested `<svg>` is the
+    // obvious alternative and it silently vanishes inside this frame.
+    '<g>' +
+    fit(ARTBOARD, device()) +
+    '</g>' +
+    '</svg>'
+  )
+}
 
 // The device's own `fill="currentColor"` is meaningless in a standalone image:
 // `hud.css` repaints it with the device gradient, and here that has to be named.
-const standalone = medallion.replace(/fill="currentColor"/g, 'fill="url(#dsh-sh-device)"')
+/** @param shape - `round` or `octagon`. @param deviceName - the device. @returns the finished artwork. */
+const standaloneFor = (shape, deviceName) =>
+  medallionFor(shape, deviceName).replace(/fill="currentColor"/g, 'fill="url(#dsh-sh-device)"')
 
 /**
  * The rules a manifest icon has to satisfy.
  *
- * It reaches the card as a base64 `data:` URI inside an `<img src>`, so it is a
- * document of its own: `acme` is not the page, `currentColor` has nothing to
- * inherit, and a CSS custom property has no value. Every one of these has been
+ * It reaches the Plugins page as a base64 `data:` URI inside an `<img src>`, so it is
+ * a document of its own: there is no page to inherit from, `currentColor` has nothing
+ * to point at, and a CSS custom property has no value. Every one of these has been
  * wrong at least once.
  *
+ * The shape and the device are checked rather than trusted: an icon that quietly fell
+ * back to the round whale would still pass every "is it drawable" rule while
+ * advertising a badge the row does not draw.
+ *
  * @param svg - the artwork's text.
- * @throws when the artwork would not draw.
+ * @param shape - `round` or `octagon`.
+ * @param deviceName - the device it claims to show.
+ * @throws when the artwork would not draw, or is not the badge that was asked for.
  */
-function verify(svg) {
+function verify(svg, shape, deviceName) {
+  const isRound = shape !== 'octagon'
+  const device = devices[deviceName]()
+  const motif = /d="([^"]{20,})"/.exec(device)
   const rules = [
     ['xmlns="http://www.w3.org/2000/svg"', 'declare the SVG namespace'],
     ['url(#dsh-sh-device)', 'strike the device from the medallion’s own metal'],
     ['stop-color="#fdf1cd"', 'write the bronze/light palette out literally'],
-    ['<circle cx="24" cy="24" r="22.6"', 'draw the round covenant medal, the default shape'],
-    ['stroke-dasharray', 'keep the medal’s milled edge'],
-  ]
+    ['url(#dsh-sh-clip)', 'clip the fractures to the field'],
+    isRound
+      ? [`<circle cx="24" cy="24" r="${round.plateRadius}"`, 'draw the round covenant medal']
+      : [`<polygon points="${octagon.plate}"`, 'draw the cut-corner plate'],
+    isRound
+      ? ['stroke-dasharray="0.9 1.6"', 'keep the medal’s milled edge']
+      : [`<polygon points="${insetPolygon(octagon.plate, 0.945)}"`, 'draw the plate’s inset band'],
+    motif ? [motif[1], `show the ${deviceName} it claims`] : null,
+  ].filter(Boolean)
   for (const [needle, why] of rules) {
     if (!svg.includes(needle)) throw new Error(`icon.svg must ${why}: missing ${needle}`)
   }
@@ -256,22 +342,42 @@ function verify(svg) {
   ]) {
     if (svg.includes(needle)) throw new Error(`icon.svg must not use ${needle}: ${why}`)
   }
+  if (!isRound && svg.includes('stroke-dasharray')) {
+    throw new Error('icon.svg draws an octagon: it has no beaded edge to dash')
+  }
   if (Buffer.byteLength(svg) > 256 * 1024) {
     throw new Error('the app refuses a manifest icon over 256 KiB')
   }
 }
 
-const target = new URL('../icon.svg', import.meta.url)
+// --- which badge, and where it goes ------------------------------------------
+
+/** The value of `--name value`, or the fallback. */
+function flag(name, fallback) {
+  const at = process.argv.indexOf(`--${name}`)
+  return at === -1 ? fallback : process.argv[at + 1]
+}
+
+const shape = flag('shape', 'round')
+const deviceName = flag('device', 'whale')
+const out = flag('out', null)
+const isDefault = shape === 'round' && deviceName === 'whale'
+if (!isDefault && out === null) {
+  throw new Error('icon: pass --out <path> to write a variant; the default path is the card artwork')
+}
+const target = out === null ? new URL('../icon.svg', import.meta.url) : resolve(process.cwd(), out)
+const standalone = standaloneFor(shape, deviceName)
+
 if (process.argv.includes('--check')) {
   const current = readFileSync(target, 'utf8')
   if (current.trim() !== standalone.trim()) {
-    console.error('icon.svg is stale — run: node test/icon.mjs')
+    console.error(`${target} is stale — run: node test/icon.mjs${isDefault ? '' : ` --shape ${shape} --device ${deviceName} --out ${out}`}`)
     process.exit(1)
   }
-  verify(current)
-  console.log('icon.svg is up to date and drawable (%d bytes)', Buffer.byteLength(current))
+  verify(current, shape, deviceName)
+  console.log('%s is up to date and drawable (%d bytes, %s %s)', out ?? 'icon.svg', Buffer.byteLength(current), shape, deviceName)
 } else {
-  verify(standalone)
+  verify(standalone, shape, deviceName)
   writeFileSync(target, standalone + '\n')
-  console.log('wrote icon.svg (%d bytes)', Buffer.byteLength(standalone))
+  console.log('wrote %s (%d bytes, %s %s)', out ?? 'icon.svg', Buffer.byteLength(standalone), shape, deviceName)
 }

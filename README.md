@@ -62,6 +62,8 @@ node plugins/souls-hud/test/form.mjs             # renders the settings page in 
 node plugins/souls-hud/test/upload.mjs           # the upload path, in headless Chrome
 node plugins/souls-hud/test/preview.mjs          # rebuilds preview/preview.html
 node plugins/builder-hud/test/icon.mjs --check   # the card artwork matches the renderer
+node plugins/builder-hud/test/icon.mjs --shape octagon --device sun \
+  --out plugins/souls-hud/icon.svg --check         # the skin's row icon
 ```
 
 `harness.mjs` drives the routes through a copy of the real request matcher, the
