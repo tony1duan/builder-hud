@@ -95,12 +95,8 @@ words; the donations exist to pay for maintenance, not to open a door.
 
 If the HUD earns its place in your sidebar, the tip jar is on **this bundle's
 card page** — the skin registers it into `plugins.detail.section`, so it sits one
-level out from the row's settings. Two buttons, each a glyph beside its label:
-WeChat unfolds its code in place, Ko-fi opens in a new tab. Both are configured in
-one place and documented in [the Souls Style README](../souls-hud#support), and an
-unfilled channel is not rendered at all, so a checkout that has not been given an
-address shows no tip jar. The same section lists the two metadata fields (npm's `funding`,
-`.github/FUNDING.yml`) that make a channel findable once there is one; this
-package's `package.json` can carry the same `funding` field as the skin.
+level out from the row's settings. WeChat unfolds its code in place, Ko-fi opens in
+a new tab, and an unfilled channel is not rendered at all. Both are configured in
+one place and documented in [the Souls Style README](../souls-hud#support).
 
 A donation changes nothing about the licence: MIT before, MIT after.

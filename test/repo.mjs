@@ -351,57 +351,74 @@ function destinationOf(target, fromFile) {
   if (/^[a-z][a-z0-9+.-]*:/i.test(target)) {
     // A URL that names a file in this repository is still a link we can check.
     const blob = /^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/blob\/[^/]+\/(.+)$/.exec(target)
-    if (blob === null || `${blob[1]}/${blob[2]}` !== SELF_REPO) return null
-    const [path, anchor] = splitAnchor(blob[3])
-    return { path: join(ROOT, path), anchor }
+    if (blob !== null) {
+      if (`${blob[1]}/${blob[2]}` !== SELF_REPO) return null
+      const [path, anchor] = splitAnchor(blob[3])
+      return { path: join(ROOT, path), anchor }
+    }
+    // A bare repository URL with an anchor means the root README — which is where
+    // the Sponsor button's `custom` link sends people.
+    const repo = /^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)#(.+)$/.exec(target)
+    if (repo !== null && `${repo[1]}/${repo[2]}` === SELF_REPO) {
+      return { path: join(ROOT, 'README.md'), anchor: repo[3] }
+    }
+    return null
   }
   const [target_, anchor] = splitAnchor(target)
   const path = target_ === '' ? join(ROOT, fromFile) : resolve(ROOT, dirname(fromFile), target_)
   return { path, anchor }
 }
 
+/**
+ * Assert that a destination exists and that its anchor names a real heading.
+ * Returns true when an anchor was actually checked, so the summary can count it.
+ */
+function assertResolves(destination, target, where) {
+  assert.ok(
+    !relative(ROOT, destination.path).startsWith('..'),
+    `${where}: '${target}' points outside the repository`,
+  )
+  assert.ok(existsSync(destination.path), `${where}: '${target}' does not exist`)
+  if (destination.anchor === null || destination.anchor === '') return false
+
+  // A directory link is served as that directory's README, so an anchor on it
+  // resolves there — that is exactly how `../souls-hud#support` works.
+  let path = destination.path
+  if (statSync(path).isDirectory()) path = join(path, 'README.md')
+  assert.ok(path.endsWith('.md'), `${where}: '#${destination.anchor}' points into a file with no headings`)
+  assert.ok(
+    anchorsOf(rel(path)).has(destination.anchor),
+    `${where}: no heading in ${rel(path)} makes the anchor '#${destination.anchor}'`,
+  )
+  return true
+}
+
 let checkedLinks = 0
 for (const file of DOC_FILES) {
   const text = read(file)
 
-  // A GitHub URL in the repository's own metadata must name this repository, or
-  // a known third party. A typo here is a link that 404s and nobody sees it.
+  // GitHub URLs in the repository's own metadata must name this repository or a
+  // known third party, and any that point back into it must resolve — YAML values
+  // included, because that is where the Sponsor button and the issue chooser send
+  // people, and a typo there is a 404 nobody sees.
   if (file.startsWith('.github/')) {
-    for (const match of text.matchAll(/https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)/g)) {
-      const slug = `${match[1]}/${match[2]}`
+    for (const found of text.matchAll(/https:\/\/github\.com\/[^\s"'\])]+/g)) {
+      const url = found[0]
+      const slug = /^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)/.exec(url)
+      const named = slug === null ? null : `${slug[1]}/${slug[2]}`
       assert.ok(
-        slug === SELF_REPO || EXTERNAL_REPOS.has(slug),
-        `${file}: github.com/${slug} is neither this repository nor a known third party`,
+        named !== null && (named === SELF_REPO || EXTERNAL_REPOS.has(named)),
+        `${file}: ${url} names neither this repository nor a known third party`,
       )
+      const destination = destinationOf(url, file)
+      if (destination !== null && assertResolves(destination, url, file)) checkedLinks += 1
     }
   }
 
   for (const { target, line } of linksIn(text)) {
     const destination = destinationOf(target, file)
     if (destination === null) continue
-    const where = `${file}:${line}`
-
-    assert.ok(
-      !relative(ROOT, destination.path).startsWith('..'),
-      `${where}: '${target}' points outside the repository`,
-    )
-    assert.ok(existsSync(destination.path), `${where}: '${target}' does not exist`)
-
-    // A directory link is served as that directory's README, so an anchor on it
-    // resolves there — that is exactly how `../souls-hud#support` works.
-    let target_ = destination.path
-    if (destination.anchor !== null && statSync(target_).isDirectory()) target_ = join(target_, 'README.md')
-
-    if (destination.anchor === null || destination.anchor === '') continue
-    assert.ok(
-      target_.endsWith('.md'),
-      `${where}: '#${destination.anchor}' points into a file with no headings`,
-    )
-    assert.ok(
-      anchorsOf(rel(target_)).has(destination.anchor),
-      `${where}: no heading in ${rel(target_)} makes the anchor '#${destination.anchor}'`,
-    )
-    checkedLinks += 1
+    if (assertResolves(destination, target, `${file}:${line}`)) checkedLinks += 1
   }
 
   // Commands in the documents must name files that exist. The docs use both

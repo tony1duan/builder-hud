@@ -821,7 +821,10 @@ const supportHtml = htmlOf(supportTree)
 const supportFlat = textOf(supportTree)
 const shippedChannels = supportLiteral(clientJs).channels
 ok(supportFlat.includes('Support the author'), 'the tip jar gets its own section')
-ok(supportFlat.includes('A tip is a thank-you'), 'and says what the money is')
+ok(
+  !supportFlat.includes('A tip is a thank-you') && !supportFlat.includes('unlocks nothing'),
+  'and nothing but the heading: the buttons are the rest of it',
+)
 for (const channel of shippedChannels) {
   ok(
     supportFlat.includes(SUPPORT_LABELS[channel.id]) === configured(channel),

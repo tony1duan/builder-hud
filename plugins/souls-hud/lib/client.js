@@ -297,12 +297,11 @@ window.__ModuleLoader__.load({
         "tariff.off": "未显示时段",
 
         // --- support ----------------------------------------------------------
-        // Only shown when at least one channel in `SUPPORT` is filled in; the
-        // free promise is on the page either way, because it is the point.
+        // The tip jar appears only when a channel in `SUPPORT` is filled in, and it
+        // is the heading and the buttons — nothing else. The free promise lives on
+        // the row's own settings form, which is always shown.
         "page.free": "插件完全免费，没有付费版，也没有需要解锁的功能。",
         "section.support": "支持作者",
-        "section.supportHint": "打赏只是心意，不换取任何功能。",
-        "support.thanks": "如果它帮到了你，可以请作者喝杯咖啡：",
         "support.qrHint": "扫码打赏",
         // A code is app-specific in a way a URL never is: the WeChat 赞赏码 cannot be
         // read by Alipay or by the camera app, so each channel says which app opens it.
@@ -484,8 +483,6 @@ window.__ModuleLoader__.load({
         // --- support ----------------------------------------------------------
         "page.free": "The plugin is free: no paid edition, and no feature to unlock.",
         "section.support": "Support the author",
-        "section.supportHint": "A tip is a thank-you, not a purchase — it unlocks nothing.",
-        "support.thanks": "If it has been useful, you can buy the author a coffee:",
         "support.qrHint": "scan to tip",
         "support.qrOpen": "If it will not scan, click the code to open the full-size image.",
         "support.kofi": "Ko-fi",
@@ -2325,7 +2322,6 @@ window.__ModuleLoader__.load({
       var RULE = "0.5px solid var(--dsw-alias-border-l2, rgba(128,128,128,0.25))";
       var sectionStyle = { paddingTop: "16px", marginTop: "14px", borderTop: RULE };
       var titleStyle = { fontSize: "13px", fontWeight: 700, letterSpacing: "0.2px" };
-      var descStyle = { fontSize: "12px", lineHeight: "18px", color: TERTIARY, marginTop: "2px" };
       var captionStyle = { fontSize: "11px", lineHeight: "14px", color: TERTIARY };
       var buttonStyle = {
         font: "inherit",
@@ -2427,7 +2423,6 @@ window.__ModuleLoader__.load({
           "section",
           { style: sectionStyle, "data-dsh-support": "bundle" },
           React.createElement("div", { style: titleStyle }, t("section.support")),
-          React.createElement("div", { style: descStyle }, t("section.supportHint")),
           React.createElement(
             "div",
             {

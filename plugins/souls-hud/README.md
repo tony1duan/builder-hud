@@ -810,31 +810,27 @@ device, run `node plugins/builder-hud/test/icon.mjs --shape octagon --device sun
 
 ## Support
 
-The plugin is free, and this section is the whole business model: nothing is for
-sale, no feature sits behind a licence, and there is no key to enter. If the HUD
-earns its place in your sidebar, a tip is welcome — it buys nothing, it just pays
-for more of the author's evenings.
+The plugin is free: nothing is for sale, no feature sits behind a licence, and
+there is no key to enter. A tip changes none of that — the licence is MIT before
+and after, and a fork is still a fork.
 
-If the HUD earns its place in your sidebar, here is the tip jar itself:
-
-![微信赞赏码](./assets/support/wechat.png)
-
-**It lives on the BuilderHUD card's page, not in this skin's settings form.** The
-slot is `plugins.detail.section`, which the Plugins page renders after a bundle's
-rows, a row's configuration and an official plugin's form alike — the component
-checks the subject it was handed, so it appears on this bundle's page and nowhere
-else. That is one level out from the settings on purpose: how to thank the author is
-a fact about the project rather than a setting of the skin, and a 200 px payment code
-parked under a form of sliders was the loudest thing on the page.
+**The tip jar is not in this skin's settings form.** It is registered into
+`plugins.detail.section`, which the Plugins page renders after a bundle's rows, a
+row's configuration and an official plugin's form alike; the component checks the
+subject it was handed, so it appears on BuilderHUD's card page and nowhere else.
+That is one level out on purpose — how to thank the author is a fact about the
+project, not a setting of the skin. The panel is **the heading and the buttons,
+and nothing else**: a 200 px payment code parked under a form of sliders was the
+loudest thing on the page, and a sentence explaining that a tip unlocks nothing
+only repeated the heading.
 
 **Two buttons, each a glyph beside its label.** Ko-fi is an ordinary link that opens
-in a new tab. WeChat unfolds its code in place with a `<details>` — the same
-disclosure the tariff rule uses — because a payment code is something you look at
-once rather than something to park on a settings page. Both glyphs are drawn in
-`lib/client.js` rather than borrowed, the same rule the medallion follows: a scan
-frame for the code, a cup for Ko-fi, neither company's logo.
+in a new tab; WeChat unfolds its code in place with a `<details>`, the same
+disclosure the tariff rule uses. Both glyphs are drawn in `lib/client.js` rather
+than borrowed — a scan frame and a cup, neither company's logo — the same rule the
+medallion follows.
 
-Every channel lives in **one place**, `lib/client.js` — both are on, and a channel
+Every channel lives in **one place**, `lib/client.js`; both are on, and a channel
 whose half is empty is invisible:
 
 ```js
@@ -846,70 +842,49 @@ var SUPPORT = {
 };
 ```
 
-- A **link** channel is shown once its `url` is set (https only), as a button that
-  opens in a new tab.
-- A **QR** channel is shown once its `file` is set. The image goes in
-  [`assets/support/`](assets/support/README.md), and the host serves it at
-  `/dsh-souls-hud/support/<file>` — a conservative file-name pattern and nothing
-  else, so the route cannot be walked out of its directory.
-- **A code is drawn at 200×200 and is also a link to the file itself.** A decorative
-  code — the 赞赏码 is a ring of dots, not a grid — is not scannable at the 132 px
-  this started with, so the tile was enlarged and made clickable: opening it shows
-  `wechat.png` at its own 591 px, which is the size a phone actually needs.
-  `test/form.mjs` asserts both.
-- **Every code names the app that can read it.** The caption is
-  `label · support.<id>.scan`, so the WeChat tile reads *只能微信扫一扫 / WeChat app
-  only*: a 赞赏码 is WeChat's own format, and Alipay or the camera app cannot read
-  it. The line is required for every QR channel — `test/harness.mjs` fails without
-  it in either language.
-- **An unfilled channel is not rendered at all.** With every channel empty the page
-  has no tip-jar section — an empty tip jar would read as a missing feature.
-- `id` doubles as the dictionary key `support.<id>`; `test/harness.mjs` fails when
-  a channel has no label in either language, when a link is not `https://`, when a
-  configured image is missing from `assets/support/`, or when a configured link is
-  absent from `package.json`'s `funding`.
+- A **link** channel appears once its `url` is set (https only): a button opening
+  in a new tab.
+- A **QR** channel appears once its `file` is set. The image goes in
+  [`assets/support/`](assets/support/README.md) and the host serves it at
+  `/dsh-souls-hud/support/<file>` under a conservative name pattern, so the route
+  cannot be walked out of its directory. It is drawn at 200×200 and is also a link
+  to the file itself, because a 赞赏码 is a ring of dots rather than a grid and is
+  unscannable smaller. `test/form.mjs` asserts both.
+- **Every code names the app that can read it**, as `label · support.<id>.scan`:
+  a 赞赏码 is WeChat's own format, and Alipay or the camera app cannot read it.
+  `test/harness.mjs` fails if a QR channel has no such line in either language.
+- **An unfilled channel is not rendered at all** — with every channel empty there
+  is no section, because an empty tip jar reads as a missing feature.
+- `test/harness.mjs` also fails when a link is not `https://`, when a configured
+  image is missing from `assets/support/`, or when a configured link is absent from
+  `package.json`'s `funding`.
 
-The copy is deliberately blunt about the deal: **"A tip is a thank-you, not a
-purchase — it unlocks nothing."** `test/form.mjs` mounts the real component four
-times — the tip jar with both channels on, with every channel empty, and against two
-subjects that are not this bundle — and writes
-[`preview/tip-jar.html`](preview/tip-jar.html) (the panel, its disclosure opened) and
-[`preview/form.html`](preview/form.html) (the settings form, which no longer carries
-the tip jar at all).
+`test/form.mjs` mounts the real component four times — the tip jar with both
+channels on, with every channel empty, and against two subjects that are not this
+bundle — and writes [`preview/tip-jar.html`](preview/tip-jar.html) (the panel, its
+disclosure opened) and [`preview/form.html`](preview/form.html) (the settings form,
+which no longer carries the tip jar at all).
 
 ### The metadata, once an address exists
 
-Two things exist only so the channel can be *found*, and both are filled in by
-hand when the first address is:
+Two fields exist only so a channel can be *found*; `test/harness.mjs` fails while a
+configured channel is missing from them:
 
-1. **`package.json` → `funding`**, which npm itself reads. `test/harness.mjs`
-   fails while a configured channel is missing from it:
+1. **`package.json` → `funding`**, which npm itself reads:
 
    ```json
-   "funding": [
-     { "type": "ko-fi", "url": "https://ko-fi.com/<you>" },
-     { "type": "github", "url": "https://github.com/sponsors/<you>" },
-     { "type": "afdian", "url": "https://afdian.com/a/<you>" }
-   ]
+   "funding": [{ "type": "ko-fi", "url": "https://ko-fi.com/<you>" }]
    ```
 
-2. **`.github/FUNDING.yml`**, if the package is published from GitHub:
+2. **`.github/FUNDING.yml`**, which GitHub renders as the Sponsor button.
 
-   ```yaml
-   github: <you>
-   ko_fi: <you>
-   custom: ["https://afdian.com/a/<you>"]
-   ```
+A QR code has no URL to declare, so the WeChat 赞赏码 is checked against
+`assets/support/` on disk instead.
 
-   > A QR code has no URL to declare, which is why the WeChat 赞赏码 is checked
-   > against `assets/support/` on disk instead: the harness fails if a configured
-   > `file` is not actually there.
-
-The licence stays **MIT** and unchanged: a donation is not a licence, and a fork is
-still a fork. What this section must never become is a paywall — which is why
-`test/form.mjs` mounts the component with every channel cleared and asserts the
-whole section disappears, while the shipped page is asserted to show exactly the
-channels that are configured and no others.
+What this section must never become is a paywall: `test/form.mjs` mounts the
+component with every channel cleared and asserts the whole section disappears, and
+asserts the shipped page shows exactly the channels that are configured and no
+others.
 
 ## Publishing
 

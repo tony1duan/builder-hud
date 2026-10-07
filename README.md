@@ -76,23 +76,13 @@ browser-side tests, a local Chrome.
 
 ## Support
 
-The plugin is free, and there is no paid edition, no licence key and no feature to
-unlock; the settings form says so in as many words. If it earns its place in your
-sidebar, the tip jar sits on **BuilderHUD's own page** — one level out from the
-skin's settings, where it was drowning them:
+The plugin is free: no paid edition, no licence key, and nothing to unlock. The
+settings page says so in as many words.
 
-![微信赞赏码](plugins/souls-hud/assets/support/wechat.png)
-
-The WeChat 赞赏码 above is the one for readers in China — scan it in WeChat, which
-is the only app that can read it. Everywhere else, there is
-**[Ko-fi](https://ko-fi.com/tonyhd)**; both are offered from the plugin's settings
-page too, as soon as one is open.
-
-Both are buttons with a glyph: WeChat unfolds its code in place, Ko-fi opens in a
-new tab. Channels live in one place (`SUPPORT` in
-[`plugins/souls-hud/lib/client.js`](plugins/souls-hud/lib/client.js)) and an
-unconfigured channel is not rendered at all. See
-[the Support section](plugins/souls-hud/README.md#support) for how to fill one in.
+If it earns its place in your sidebar, the tip jar is **in the app**, on
+BuilderHUD's card page — a WeChat 赞赏码 for readers in China, and
+**[Ko-fi](https://ko-fi.com/tonyhd)** everywhere else. It buys nothing; the licence
+is MIT either way.
 
 ## Unaffiliated
 
