@@ -1,8 +1,7 @@
 # macOS
 .DS_Store
 
-# Internal working notes — reverse-engineering and session handoffs. Never public:
-# these describe this machine, the app's internals, and the process behind the code.
+# Local working notes. Not part of the project, never published.
 notes/
 
 # Node

@@ -955,6 +955,53 @@ if (configuredLinks.length > 0) {
   }
 }
 
+// --- the retired DeepSeek mark must not come back ------------------------------
+//
+// The first cut of the badge stamped the app's own favicon path into the medallion
+// — a trademark in a place its owner never put it, and inside an open-source
+// package it would imply an endorsement that does not exist. The README promises a
+// guard that fails if it returns; this is that guard.
+//
+// It checks both directions on purpose. The official path must be *absent* — the
+// three fragments below are taken from the app's own `favicon.svg`, and they were
+// verified present in the app bundle and absent here — and the whale this project
+// drew must be *present*, so a quiet regression on either side fails the suite
+// rather than shipping.
+
+const OFFICIAL_MARK = [
+  'M48.8354 10.0479C48.3232 9.79199 48.1025 10.2798',
+  '49.3237 10.2959 48.8354 10.0479Z',
+  '33.2446 27.3521 33.0713 27.6802 32.6064 27.8799Z',
+]
+/** The head of this project's own whale, which the badge draws by default. */
+const OWN_WHALE = 'M32.4 315.2C-1.97882 215.09'
+const SHIPPED_SOURCES = [
+  'lib/hud.js',
+  'lib/hud.css',
+  'preview/preview.html',
+  'preview/cells.html',
+  'assets/devices/whale.svg',
+]
+for (const file of SHIPPED_SOURCES) {
+  const text = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8')
+  for (const fragment of OFFICIAL_MARK) {
+    assert.ok(
+      !text.includes(fragment),
+      `${file} carries the app's own favicon path: that mark is theirs, not ours`,
+    )
+  }
+  assert.ok(
+    !/favicon/i.test(text),
+    `${file} mentions favicon — the official mark must not be shipped in any form`,
+  )
+}
+for (const file of ['lib/hud.js', 'assets/devices/whale.svg']) {
+  assert.ok(
+    readFileSync(new URL(`../${file}`, import.meta.url), 'utf8').includes(OWN_WHALE),
+    `${file} must ship this project's own whale drawing`,
+  )
+}
+
 // --- the motif's colour is the material, by construction ---------------------
 //
 // The rule the badge has to satisfy: whatever is stamped into the medal is the

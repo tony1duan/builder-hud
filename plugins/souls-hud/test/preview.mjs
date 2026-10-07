@@ -26,11 +26,18 @@ const outDir = new URL('preview/', root)
 mkdirSync(outDir, { recursive: true })
 
 /**
- * Best-effort live vitals. When the app is running, the preview shows the
- * user's real numbers instead of a mock, so it can be compared against the
- * game's own HUD side by side. Silently falls back to the mocks.
+ * Best-effort live vitals, **opt-in**.
+ *
+ * With `--live` and the app running, the preview shows the user's real numbers
+ * instead of a mock, so the HUD can be compared against a live session. It is off
+ * by default because `preview/preview.html` is a committed file: running this
+ * without the flag once baked the account's real balance and the capture timestamp
+ * into the page, which is not something a repository should carry. The fallback
+ * fixtures are the honest default for an artifact that ships.
  */
+const useLive = process.argv.includes('--live')
 async function liveState() {
+  if (!useLive) return null
   try {
     const response = await fetch('http://127.0.0.1:19387/dsh-souls-hud/state.json', {
       signal: AbortSignal.timeout(2500),

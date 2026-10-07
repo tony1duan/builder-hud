@@ -705,7 +705,14 @@ node plugins/souls-hud/test/upload.mjs        # the upload path, driven in headl
 node plugins/souls-hud/test/devices.mjs --check # assets/devices matches the renderer
 node plugins/builder-hud/test/icon.mjs --check # the card artwork matches this renderer
 node plugins/souls-hud/test/preview.mjs       # rebuilds preview/preview.html
+node plugins/souls-hud/test/preview.mjs --live # …with the running app's real numbers
 ```
+
+`preview.mjs` reads live vitals **only** with `--live`, and the committed
+`preview/preview.html` is generated without it. That is deliberate: the page is a
+shipped artifact, and rendering it by default once baked the account's balance and
+the capture timestamp into it — a repository should carry the mocks, not the
+maintainer's wallet.
 
 The harness covers the data path, the settings route (read, write, refusal, cap
 scaling, malformed JSON), the device route (store, serve, delete, and every
