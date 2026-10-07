@@ -441,6 +441,61 @@ for (const file of DOC_FILES) {
   }
 }
 
+// --- the two packages are publishable, and stay that way ------------------------
+//
+// Both packages go to npm, and every one of these can be broken by a one-line edit
+// that changes nothing about how the plugin *behaves* — which is exactly the kind of
+// breakage that reaches a user before anyone notices. A `private: true` makes
+// `npm publish` a silent no-op. A `link:` dependency installs perfectly for the person
+// who wrote it and fails for everybody else. A license that ships without its text is
+// an MIT distribution with the notice missing.
+const PACKAGES = ['plugins/souls-hud', 'plugins/builder-hud']
+const manifests = {}
+for (const dir of PACKAGES) {
+  const manifest = JSON.parse(read(`${dir}/package.json`))
+  manifests[manifest.name] = { dir, manifest }
+  assert.ok(
+    manifest.private !== true,
+    `${dir}/package.json is private, so publishing it would do nothing`,
+  )
+  assert.ok(
+    nonEmpty(manifest.version) && /^\d+\.\d+\.\d+$/.test(manifest.version),
+    `${dir}/package.json needs a plain semantic version, got ${JSON.stringify(manifest.version)}`,
+  )
+  assert.ok(
+    nonEmpty(manifest.description) && nonEmpty(manifest.license),
+    `${dir}/package.json needs a description and a license for its npm page`,
+  )
+  // npm does not look outside the package directory for a LICENSE file, so each
+  // package carries its own copy and this is what keeps the copies honest.
+  const shipped = read(`${dir}/LICENSE`)
+  assert.strictEqual(
+    shipped,
+    read('LICENSE'),
+    `${dir}/LICENSE has drifted from the repository's — the two must be the same text`,
+  )
+}
+
+for (const { dir, manifest } of Object.values(manifests)) {
+  for (const [name, range] of Object.entries(manifest.dependencies ?? {})) {
+    assert.ok(
+      !/^(link|file|workspace):/.test(range),
+      `${dir}/package.json depends on ${name} as '${range}': that resolves on this machine and nowhere else`,
+    )
+    const local = manifests[name]
+    if (!local) continue
+    // A range the sibling package does not satisfy publishes a bundle that cannot be
+    // installed: npm would look for a version of the skin that does not exist.
+    const wanted = /^\^(\d+)\.(\d+)\.(\d+)$/.exec(range)
+    assert.ok(wanted, `${dir}/package.json: cannot check the range '${range}' for ${name}`)
+    const [major, minor] = local.manifest.version.split('.').map(Number)
+    assert.ok(
+      Number(wanted[1]) === major && Number(wanted[2]) === minor,
+      `${dir}/package.json wants ${name}@${range}, but the skin is ${local.manifest.version}: a caret on 0.x only reaches the same minor`,
+    )
+  }
+}
+
 console.log(
   `repository metadata: issue forms, the sponsor button, the pull request template, ` +
     `${checkedLinks} anchors and the linked paths and commands are all consistent`,

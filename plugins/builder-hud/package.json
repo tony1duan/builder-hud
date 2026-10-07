@@ -1,7 +1,6 @@
 {
   "name": "dsh-plugin-builder-hud",
   "version": "0.4.1",
-  "private": true,
   "description": "BuilderHUD — vitals-cluster skins for the DSH sidebar.",
   "type": "module",
   "exports": {
@@ -9,7 +8,7 @@
     "./locale/*": "./locale/*"
   },
   "dependencies": {
-    "dsh-plugin-souls-hud": "link:../souls-hud"
+    "dsh-plugin-souls-hud": "^0.4.1"
   },
   "dsh": {
     "manifestVersion": 1,

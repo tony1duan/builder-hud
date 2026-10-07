@@ -91,6 +91,23 @@ skin README: the **row must not be repeated** in the profile's own patch layer, 
 the two packages need two names because the card's name comes from the bundle and
 the row's from the skin.
 
+## The repository's own settings
+
+Two things on GitHub are not in the code, and neither has an API to set it, so they
+are recorded here rather than rediscovered:
+
+- **The social preview card** is `.github/social-preview.png`, 1280×640, and it is
+  uploaded by hand under *Settings → General → Social preview*. Nothing reads it out
+  of the repository — GitHub has no endpoint for it — so when the medallion or the
+  bars change, it has to be regenerated from a real render and uploaded again, or the
+  card keeps advertising a badge that no longer exists.
+- **Private vulnerability reporting is on**, which is what `SECURITY.md` sends people
+  to. If it is ever turned off, that document's only reporting route is a dead end.
+
+Both packages are published to npm, and `test/repo.mjs` holds the invariants that keep
+them publishable: not `private`, a real version range rather than a `link:`, a range
+the sibling package can satisfy, and a `LICENSE` that matches the repository's.
+
 ## Changing something in the running app
 
 The client half is re-composed per page load; the host half is a Node module loaded
