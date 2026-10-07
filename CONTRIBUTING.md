@@ -104,9 +104,12 @@ are recorded here rather than rediscovered:
 - **Private vulnerability reporting is on**, which is what `SECURITY.md` sends people
   to. If it is ever turned off, that document's only reporting route is a dead end.
 
-Both packages are published to npm, and `test/repo.mjs` holds the invariants that keep
+Both packages are prepared for npm, and `test/repo.mjs` holds the invariants that keep
 them publishable: not `private`, a real version range rather than a `link:`, a range
-the sibling package can satisfy, and a `LICENSE` that matches the repository's.
+the sibling package can satisfy, and a `LICENSE` that matches the repository's. The
+install instructions move to npm in the same commit that publishes them — a README
+that sends a reader to a package that is not on the registry yet is worse than one that
+still says "from a checkout".
 
 ## Changing something in the running app
 

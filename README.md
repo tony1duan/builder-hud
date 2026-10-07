@@ -35,23 +35,7 @@ holiday calendar and the test suite. Start there.
 
 ## Install
 
-The bundle is on npm. Run this in your profile, and add its name to the profile's
-bundle list:
-
-```sh
-cd ~/.dsh/profiles/desktop
-pnpm add dsh-plugin-builder-hud
-```
-
-```json
-{ "dsh": { "profile": { "bundles": ["…", "dsh-plugin-builder-hud"] } } }
-```
-
-It brings the skin in as its own dependency — two packages, for the reasons
-[the Souls Style README](plugins/souls-hud/README.md#the-names-and-why-there-are-two-packages)
-sets out.
-
-From a checkout instead, point one row at the skin's host entry in your profile's
+From a checkout, point one row at the skin's host entry in your profile's
 `cordis.patch.yml`:
 
 ```yaml
