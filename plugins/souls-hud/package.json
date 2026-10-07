@@ -22,19 +22,33 @@
     }
   },
   "files": [
-    "lib/host.js",
-    "lib/client.js",
-    "lib/hud.js",
-    "lib/hud.css",
-    "README.md",
-    "locale/zh.json",
-    "locale/en.json",
-    "lib/tariff.js",
-    "lib/holidays.js",
-    "data/holidays-cn.json",
+    "lib",
+    "data",
     "assets",
-    "locale"
+    "locale",
+    "README.md"
   ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "hud",
+    "sidebar",
+    "status-bar",
+    "dark-souls"
+  ],
+  "author": "tony1duan",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tony1duan/builder-hud.git",
+    "directory": "plugins/souls-hud"
+  },
+  "homepage": "https://github.com/tony1duan/builder-hud/blob/main/plugins/souls-hud/README.md",
+  "bugs": {
+    "url": "https://github.com/tony1duan/builder-hud/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "license": "MIT",
   "funding": [
     {

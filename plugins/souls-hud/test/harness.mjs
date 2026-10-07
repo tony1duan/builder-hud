@@ -955,6 +955,31 @@ if (configuredLinks.length > 0) {
   }
 }
 
+// --- the published tarball must carry what the manifest claims -----------------
+//
+// `files` decides what npm ships, and a path that no longer exists is dropped
+// silently: the package installs, then fails at runtime because the renderer or the
+// holiday data is not in it. Every entry is checked here, and the five that the
+// plugin cannot work without are named so that a rename cannot quietly empty the
+// package while the manifest still looks right.
+
+{
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
+  assert.ok(Array.isArray(pkg.files) && pkg.files.length > 0, 'the manifest must declare what it ships')
+  for (const entry of pkg.files) {
+    assert.ok(
+      existsSync(new URL(`../${entry}`, import.meta.url)),
+      `package.json files lists ${entry}, which does not exist`,
+    )
+  }
+  for (const required of ['lib/host.js', 'lib/client.js', 'lib/hud.js', 'lib/hud.css', 'data/holidays-cn.json']) {
+    assert.ok(
+      new URL('../' + required, import.meta.url) && existsSync(new URL(`../${required}`, import.meta.url)),
+      `${required} must exist: the package is broken without it`,
+    )
+  }
+}
+
 // --- the retired DeepSeek mark must not come back ------------------------------
 //
 // The first cut of the badge stamped the app's own favicon path into the medallion

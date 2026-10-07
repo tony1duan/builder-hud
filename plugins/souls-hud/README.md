@@ -887,13 +887,40 @@ channels that are configured and no others.
 
 ## Publishing
 
-Drop `"private": true` on **both** packages, publish them, and anyone can
-install the bundle from the Plugins page with a working switch — pnpm pulls this
-package in as the bundle's dependency. There is no separate marketplace: the page
-installs pnpm spec forms, and a package becomes a switchable bundle card when it
-declares `dsh.bundle.patch` — which this one does.
+Everything `npm` needs is already in the manifests: `repository` (pointing at the
+subdirectory each package lives in), `homepage`, `bugs`, `keywords`, `engines` and
+`funding`. Both packages keep `"private": true` so that publishing is a deliberate
+act rather than a slip of the finger; drop it on both when you mean it.
+
+Three things to do in order:
+
+1. **Replace the bundle's local link.** `plugins/builder-hud/package.json` depends
+   on `dsh-plugin-souls-hud` through `link:../souls-hud`, which only resolves in
+   this checkout. For a publish it becomes a real range:
+
+   ```json
+   "dependencies": { "dsh-plugin-souls-hud": "^0.4.0" }
+   ```
+
+2. **Publish the skin first, then the bundle** — the bundle depends on it. Check
+   what each tarball will carry before pushing it anywhere:
+
+   ```sh
+   npm pack --dry-run --json   # run inside each package directory
+   ```
+
+   The `files` arrays are the contract: the skin ships `lib/`, `data/`, `assets/`
+   and `locale/`; the bundle ships the patch, its icon and its two locale files,
+   and no runtime code at all.
+
+3. **Install it from the Plugins page** with the pnpm spec form to prove the
+   published tarball works, rather than trusting the checkout. There is no separate
+   marketplace: a package becomes a switchable bundle card when it declares
+   `dsh.bundle.patch` — which the bundle does.
 
 Two things to settle before publishing, both about the artwork rather than the
-code: the whale is **not** the DeepSeek logo and should not be replaced by it,
-and the medallion's frame is BuilderHUD's own drawing — it says "Dark Souls
-style" in the same way a font says "Gothic", not as a claim on anyone's mark.
+code: the whale is **not** the DeepSeek logo and should not be replaced by it, and
+the medallion's frame is BuilderHUD's own drawing — "Dark Souls" is a trademark of
+FromSoftware and Bandai Namco, used descriptively here the way a font says
+"Gothic", and no endorsement is implied or claimed. `test/harness.mjs` fails if the
+app's own favicon path reappears in a shipped file.

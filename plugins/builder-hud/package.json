@@ -24,6 +24,26 @@
     "locale/zh.json",
     "locale/en.json"
   ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "hud",
+    "sidebar",
+    "bundle"
+  ],
+  "author": "tony1duan",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tony1duan/builder-hud.git",
+    "directory": "plugins/builder-hud"
+  },
+  "homepage": "https://github.com/tony1duan/builder-hud#readme",
+  "bugs": {
+    "url": "https://github.com/tony1duan/builder-hud/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "license": "MIT",
   "icon": "./icon.svg",
   "funding": [

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Read the skin's documentation first
+    url: https://github.com/tony1duan/builder-hud/blob/main/plugins/souls-hud/README.md
+    about: Installation, every setting, the artwork, the tariff rule and the test suite are documented there.
+  - name: The plugin's own settings page
+    url: https://github.com/tony1duan/builder-hud/blob/main/plugins/souls-hud/README.md#configuration
+    about: Most "how do I make it…" questions are a setting that already exists.

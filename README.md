@@ -91,8 +91,13 @@ unconfigured channel is not rendered at all. See
 
 This is an independent, third-party plugin. It is **not** affiliated with,
 endorsed by, or supported by DeepSeek, and it ships none of their artwork: the
-medallion, its devices and the whale are this project's own drawings. "Dark Souls"
-is used descriptively, the way a font says "Gothic".
+medallion, its devices and the whale are this project's own drawings.
+
+"Dark Souls" is a trademark of FromSoftware, Inc. and Bandai Namco Entertainment
+Inc.; it is used here **descriptively**, to say what the drawing looks like, the
+way a font says "Gothic". This project is not affiliated with, endorsed by, or
+supported by FromSoftware or Bandai Namco, ships none of their artwork or data,
+and is not a product of theirs. The covenant-medal style is homage, not a claim.
 
 ## License
 

@@ -1,0 +1,44 @@
+name: Feature request
+description: A setting, a skin, or a piece of behaviour you are missing
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The plugin is deliberately small: no runtime dependencies, one settings
+        form, and every string it shows in both Chinese and English. Requests that
+        fit that shape are the easiest to accept — the checklist below is the shape.
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you want
+      description: Describe the behaviour, not the implementation. What would you see in the sidebar, or set in the form?
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: What you are doing when you want it
+      description: The situation matters more than the feature — it is how a request gets reshaped into something smaller that solves the same problem.
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do instead today
+      description: Including "nothing — I just live with it", which is a perfectly good answer.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: fit
+    attributes:
+      label: Does it fit the project?
+      options:
+        - label: It needs no new runtime dependency (the plugin ships none, and that is a feature)
+        - label: It can be described and configured in the settings form, in both zh and en
+        - label: It is not a request to ship someone else's artwork, font or data
+        - label: I am willing to test it on my machine

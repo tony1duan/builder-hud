@@ -1,0 +1,67 @@
+name: Bug report
+description: Something the HUD draws wrong, a setting that does not stick, or an image that will not load
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Two things make a bug here reproducible in minutes:
+        what the sidebar shows, and what the host says at the same moment. If the
+        offline suite fails, that is the more useful paste of the two.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The plugin version on its card in the Plugins page, or the commit you are on.
+      placeholder: 0.4.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what you saw instead. A screenshot of the sidebar helps more than a description of it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: host-state
+    attributes:
+      label: What the host reports
+      description: |
+        Paste the output of this, run in a terminal while the app is open:
+
+        ```sh
+        curl -s http://127.0.0.1:19387/dsh-souls-hud/state.json
+        curl -s -o /dev/null -w '%{http_code} %{content_type}\n' http://127.0.0.1:19387/dsh-souls-hud/support/wechat.png
+        ```
+
+        Remove anything you would rather not share — the balances are yours.
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: suite
+    attributes:
+      label: Does the offline suite pass?
+      description: |
+        ```sh
+        node plugins/souls-hud/test/harness.mjs
+        node plugins/souls-hud/test/form.mjs
+        ```
+
+        A failure here usually names its own cause; paste it verbatim.
+      render: shell
+    validations:
+      required: false
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS and DSH version, the theme in use (light or dark), and whether the sidebar is expanded or collapsed to its rail.
+    validations:
+      required: false
