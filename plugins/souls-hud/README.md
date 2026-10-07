@@ -356,16 +356,35 @@ A lit fracture is drawn as a stack, from the outside in:
 
 | Pass | Width | Colour | Meaning |
 | --- | --- | --- | --- |
-| `crack-halo` | 3.4× the crack | the ring's colour, dim | light spilling out of the fissure |
+| `crack-halo` | 5.8× the crack, blurred | the drifting gradient | light scattered in the metal around the fissure |
+| `crack-bloom` | 3.9×, blurred | the ring's colour | the same scatter, tighter, before it becomes the band |
 | `crack-band` | 2.1× | the ring's colour | the fissure itself |
-| `crack-flow` | 1.15× | the drifting gradient | the brightness travelling inside it |
+| `crack-flow` | 1.9× | the drifting gradient | the brightness travelling inside it |
 | `crack-core` | **0.8×** | near-white | the molten centre |
 | `crack-flare` | **0.34×** | white hot | the specular line inside it |
 
 Every colour but the last two comes from `--dsh-sh-band` and `--dsh-sh-core`, the same
 properties the ring's own band and core are stroked with. That is the only reason a lit
 fracture and the arc that lit it cannot drift apart as the tariff changes: off-peak they
-are both cool, and no second palette has to be kept in step.
+are both cool, and no second palette has to be kept in step. The one exception is the
+halo, which strokes the *travelling* gradient — the light the ring's own flow pass is
+made of — and that is the point rather than a slip: it is the scatter, the part that
+reads as light in the metal rather than as the light's own body, and at peak the plate
+is already orange, so the tariff colour alone has almost nothing to separate from.
+
+**The two outer passes are blurred, and that is the whole of the effect.** A wide
+stroke with a hard edge is a fatter tube, not a haze; the blur is what makes it read
+as light passing through something. The halo also breathes on its own, at the ring's
+period, so the haze drifts rather than sitting still.
+
+**It is brightest where it opens onto the rim.** A fracture lit from behind is
+strongest at its mouth — the gap is widest there, and the metal is what the light has
+to travel through afterwards — so each pass is drawn in the same three runs
+`crackPaths` already splits the taper into, at falling `stroke-opacity`: the run at the
+rim at full strength, the two behind it at 0.78 and 0.5 (`CRACK_SHADES`). The mouth of
+a lit fracture therefore carries the arc's own strength rather than a fraction of it,
+and the tip near the centre is the dimmest part of it. A fracture drawn at one
+brightness along its whole length reads as a neon tube, which is what it used to do.
 
 The bright part is *narrower* than the crack and the dim part *wider*, which is
 what makes the light look like it is coming out of the fissure rather than being
@@ -378,11 +397,17 @@ because that is the part worth seeing on either cut.
 
 Two scenes from the same page, shot the way the hero above is: `#burn-low` (off-peak,
 25% spent) over `#burn-high` (peak, 90%), at 3x, with `.chrome`, `.mockFrame` and
-`#scene-label` hidden, each cropped to the ink and the two stacked. Both panels have to
-be captured *after* the page's first poll — the fixtures arrive asynchronously, and a
-shot taken too early is a picture of an idle badge with the bars unfilled. The second
-panel is the point of this section: in one frame, some fractures are lit and the rest
-are not.
+`#scene-label` hidden, each cropped to the ink and the two stacked. The second panel is
+the point of this section: in one frame, some fractures are lit and the rest are not.
+
+Two things have to be right for that panel to be a picture of anything. The fixtures
+arrive **asynchronously**, so a shot taken too early is an idle badge with the bars
+unfilled. And the capture has to freeze the transitions: under headless Chrome's
+virtual clock a CSS transition never advances, so a shot taken with the stylesheet as
+shipped catches every fracture at the opacity it had *before* the poll lit it — lit in
+the markup, invisible in the pixels. `#burn-detail` is the same peak frame at 3x, which
+is the size at which the falloff along a fracture is legible; the 1x frames are what
+the sidebar actually shows.
 
 ### Floating, when the sidebar is collapsed
 

@@ -488,6 +488,58 @@ const html = `<!doctype html>
     'off-peak ' + offLit + ' vs peak ' + peakLit);
   offHost.remove();
 
+  // --- the light comes in from the rim, and the metal scatters it ----------------
+  //
+  // Two things make a lit fracture read as light behind the plate rather than as a
+  // lit line, and neither is a colour, so neither is visible to the checks above.
+  //
+  // The first is that it is brightest where it opens onto the rim and dimmer as it
+  // runs into the casting: that is the one direction the light actually travels, and
+  // a crack drawn at one brightness along its whole length reads as a neon tube. The
+  // brightness is stroke-opacity per run, so the property is asserted directly.
+  //
+  // The second is that the light is *scattered* — a blur, and nothing else. A wide
+  // stroke with a hard edge is a fatter tube, not a haze, which is exactly the
+  // mistake this block exists to catch.
+  var litHost = crackHost('peak', '4');
+  var lit = litHost.querySelector('.dsh-sh__crack[data-lit="1"]');
+  var runs = [].map.call(lit.querySelectorAll('.dsh-sh__crack-band path'), function (path) {
+    return Number(path.getAttribute('stroke-opacity'));
+  });
+  check('a fracture lights in runs, the one at the rim first', runs.length >= 2, 'runs: ' + runs.length);
+  check('the run at the rim is at full strength', runs[0] === 1, 'outermost ' + runs[0]);
+  check('every run behind it is dimmer than the one before',
+    runs.length >= 2 && runs.every(function (value, index) { return index === 0 || value < runs[index - 1]; }),
+    runs.join(' > '));
+  check('so the tip nearest the centre is the dimmest', runs[runs.length - 1] < runs[0],
+    'tip ' + runs[runs.length - 1] + ' vs mouth ' + runs[0]);
+  // "As bright as the ring" has to be a comparison, not a feeling: the arc's own band
+  // is 0.85, and the mouth of the crack carries the level's full opacity, so the
+  // fracture is never the dimmer of the two.
+  var ringBand = getComputedStyle(litHost.querySelector('.dsh-sh__gauge'));
+  check('the fracture opens at least as bright as the arc that lit it',
+    runs[0] * Number(getComputedStyle(lit).opacity) >= Number(ringBand.strokeOpacity),
+    'mouth ' + runs[0] * Number(getComputedStyle(lit).opacity) + ' vs arc ' + ringBand.strokeOpacity);
+  // The scatter, and its two required properties: soft, and the wide one softer.
+  var halo = getComputedStyle(lit.querySelector('.dsh-sh__crack-halo'));
+  var bloom = getComputedStyle(lit.querySelector('.dsh-sh__crack-bloom'));
+  function blurPx(value) {
+    var match = /blur\\(([\\d.]+)px\\)/.exec(value);
+    return match ? Number(match[1]) : 0;
+  }
+  check('the light is scattered, not just wider', blurPx(halo.filter) > 0 && blurPx(bloom.filter) > 0,
+    halo.filter + ' / ' + bloom.filter);
+  check('and the widest pass is the softest', blurPx(halo.filter) > blurPx(bloom.filter),
+    blurPx(halo.filter) + 'px vs ' + blurPx(bloom.filter) + 'px');
+  // The haze is the ring's own travelling light, not a colour invented for it: the
+  // gradient comes from the markup precisely so each preview gets its own copy, and
+  // this is the assertion that the re-pointing reached the new pass.
+  var ringFlow = getComputedStyle(litHost.querySelector('.dsh-sh__gauge-flow')).stroke;
+  check('the haze is the same light the arc travels on',
+    /^url\\(/.test(halo.stroke) && halo.stroke === ringFlow, halo.stroke + ' vs ring ' + ringFlow);
+  check('and the haze drifts', halo.animationName === 'dsh-sh-scatter', halo.animationName);
+  litHost.remove();
+
   // --- can the badge actually be clicked? --------------------------------------
   //
   // Not "does the handler call the API" — that was fine and the badge still did

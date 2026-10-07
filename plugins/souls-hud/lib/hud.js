@@ -1072,6 +1072,28 @@
   var CRACK_TAPER = [1, 0.72, 0.45];
 
   /**
+   * How bright each third of a lit fracture is, from the rim inwards.
+   *
+   * A fracture lit from behind is brightest at its mouth and loses light as it runs
+   * into the casting: the gap is widest where it opens onto the edge, and the metal
+   * around it is what the light has to scatter through. So the outer third carries
+   * the gauge's own strength — `1` is the arc's brightness, not a fraction of it —
+   * and the two thirds behind it step gently down.
+   *
+   * Indexed by the same taper bucket `crackPaths` splits its runs on, so a run of
+   * constant width is also a run of constant brightness and the two steps land
+   * together instead of making a seam of their own.
+   */
+  var CRACK_SHADES = [1, 0.78, 0.5];
+
+  /**
+   * The same ramp for the scatter, which is already dim and soft: taking a full third
+   * off the far end of a blurred pass reads as a hole in the haze rather than as
+   * falloff, so it steps down by less.
+   */
+  var CRACK_SCATTER_SHADES = [1, 0.86, 0.66];
+
+  /**
    * How far short of a fracture the arc may be and still light it.
    *
    * The lit arc's own end carries a round cap and a glow that reach past the dash,
@@ -1174,9 +1196,15 @@
    * is drawn whether or not it is lit — the stylesheet decides which of them paint,
    * which is what lets one mechanism serve both the dark red rest state and the glow.
    *
-   * The passes are the ring's own stack, scaled up: a wide halo past the crack (that
-   * is the difference between "the crack is lit" and "light is coming out of it"), the
-   * band, the travelling flow, the core, and the specular flare inside it.
+   * The passes are the ring's own stack, scaled up: a wide halo and a tighter bloom
+   * past the crack (those are the difference between "the crack is lit" and "light is
+   * coming out of it"), the band, the travelling flow, the core, and the specular
+   * flare inside it. The two scatter passes are what the metal does to the light and
+   * the band upward is what the light is; the stylesheet blurs the scatter, which is
+   * the whole reason it reads as a medium rather than as a wider line.
+   *
+   * Every pass is shaded along its length — the scatter more gently than the light
+   * itself, for the reason `CRACK_SCATTER_SHADES` gives. See `CRACK_SHADES`.
    *
    * @param crack - one entry of `geometry.cracks`.
    * @param index - its position, for the DOM.
@@ -1189,13 +1217,18 @@
       '<g class="dsh-sh__crack" data-crack="' + index + '" data-at="' + round3(rimAngle(crack)) + '"' +
       (lit ? ' data-lit="1"' : "") +
       ">" +
-      '<g class="dsh-sh__crack-halo">' + crackPaths([crack], 3.4) + "</g>" +
-      '<g class="dsh-sh__crack-band">' + crackPaths([crack], 2.1) + "</g>" +
       // The gradient is referenced from the markup rather than the stylesheet, so
-      // that `previewSvg`'s id re-pointing reaches it and a preview gets its own.
-      '<g class="dsh-sh__crack-flow" stroke="url(#dsh-sh-flow)">' + crackPaths([crack], 1.15) + "</g>" +
-      '<g class="dsh-sh__crack-core">' + crackPaths([crack], 0.8) + "</g>" +
-      '<g class="dsh-sh__crack-flare">' + crackPaths([crack], 0.34) + "</g>" +
+      // that `previewSvg`'s id re-pointing reaches it and a preview gets its own. The
+      // scatter carries it at the widest scale: the haze around a lit crack is the
+      // same travelling light the arc is made of, which is what makes the two one
+      // object — and it is the *light* colour, near-white, so it separates from a
+      // plate that is already orange at peak.
+      '<g class="dsh-sh__crack-halo" stroke="url(#dsh-sh-flow)">' + crackPaths([crack], 5.8, CRACK_SCATTER_SHADES) + "</g>" +
+      '<g class="dsh-sh__crack-bloom">' + crackPaths([crack], 3.9, CRACK_SCATTER_SHADES) + "</g>" +
+      '<g class="dsh-sh__crack-band">' + crackPaths([crack], 2.1, CRACK_SHADES) + "</g>" +
+      '<g class="dsh-sh__crack-flow" stroke="url(#dsh-sh-flow)">' + crackPaths([crack], 1.9, CRACK_SHADES) + "</g>" +
+      '<g class="dsh-sh__crack-core">' + crackPaths([crack], 0.8, CRACK_SHADES) + "</g>" +
+      '<g class="dsh-sh__crack-flare">' + crackPaths([crack], 0.34, CRACK_SHADES) + "</g>" +
       (crack.w >= 0.75
         ? '<circle class="dsh-sh__crack-spill" cx="' + at[0] + '" cy="' + at[1] + '" r="' + round3(crack.w * 1.2) + '"/>'
         : "") +
@@ -1218,9 +1251,13 @@
    * @param cracks - the frame's fracture data.
    * @param scale - multiplies every width; the glow passes use it to spill past
    *   the crack they follow.
+   * @param shades - per-taper-bucket `stroke-opacity`, outermost first, or omitted
+   *   for a pass that is evenly bright along the crack. `stroke-opacity` rather than
+   *   `opacity` on purpose: the group's own opacity is the burn level, and this has
+   *   to multiply it rather than replace it.
    * @returns the `<path>` elements.
    */
-  function crackPaths(cracks, scale) {
+  function crackPaths(cracks, scale, shades) {
     var factor = typeof scale === "number" && scale > 0 ? scale : 1;
     var out = "";
     for (var c = 0; c < cracks.length; c += 1) {
@@ -1228,20 +1265,40 @@
       var pts = crack.pts;
       var run = null;
       var runWidth = 0;
+      var runShade = null;
       for (var i = 1; i < pts.length; i += 1) {
         var along = (i - 1) / Math.max(1, pts.length - 1);
-        var step = CRACK_TAPER[along < 0.34 ? 0 : along < 0.67 ? 1 : 2];
+        var bucket = along < 0.34 ? 0 : along < 0.67 ? 1 : 2;
+        var step = CRACK_TAPER[bucket];
         var width = Math.round(crack.w * step * factor * 100) / 100;
+        var shade = shades ? shades[bucket] : null;
         if (run === null || width !== runWidth) {
-          if (run !== null) out += '<path stroke-width="' + runWidth + '" d="' + run + '"/>';
+          if (run !== null) out += crackRun(run, runWidth, runShade);
           run = "M" + pts[i - 1][0] + " " + pts[i - 1][1];
           runWidth = width;
+          runShade = shade;
         }
         run += "L" + pts[i][0] + " " + pts[i][1];
       }
-      if (run !== null) out += '<path stroke-width="' + runWidth + '" d="' + run + '"/>';
+      if (run !== null) out += crackRun(run, runWidth, runShade);
     }
     return out;
+  }
+
+  /**
+   * One run of constant width, at the brightness its place on the crack earns.
+   *
+   * @param d - the path data.
+   * @param width - its `stroke-width`.
+   * @param shade - its `stroke-opacity`, or null to leave the pass even.
+   * @returns the `<path>`.
+   */
+  function crackRun(d, width, shade) {
+    return (
+      '<path stroke-width="' + width + '"' +
+      (shade === null || shade === undefined ? "" : ' stroke-opacity="' + round3(shade) + '"') +
+      ' d="' + d + '"/>'
+    );
   }
 
   /**

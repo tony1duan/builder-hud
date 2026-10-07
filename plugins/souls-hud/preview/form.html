@@ -305,12 +305,20 @@
  * passes are the ring's own stack, scaled up, so a lit fracture is unmistakably the
  * same light as the arc that lit it:
  *
- *   halo   wide and dim, past the crack on both sides — light coming *out* of it
+ *   halo   widest and softest: light scattered in the metal around the crack, which
+ *          is the part that makes it read as light *behind* the plate rather than
+ *          as a bright line on it. Blurred, and its strength drifts
+ *   bloom  the same scatter, tighter and stronger, so the falloff from haze to band
+ *          has somewhere to happen
  *   band   the tariff colour, from `--dsh-sh-band`, which is why a lit crack and the
  *          ring cannot drift apart
  *   flow   the shared drifting gradient, so the brightness inside travels
  *   core   the near-white centre
  *   flare  the specular line inside that
+ *
+ * The scatter is what the metal does to the light; everything from the band up is
+ * what the light is. Only the scatter is blurred, and only because a hard-edged wide
+ * stroke is a fatter tube rather than a softer one.
  *
  * Nothing here is per-frame work: one attribute per fracture per poll, and the
  * transition below does the coming and going.
@@ -337,6 +345,7 @@
   opacity: 1;
 }
 .dsh-sh__mark .dsh-sh__crack-halo,
+.dsh-sh__mark .dsh-sh__crack-bloom,
 .dsh-sh__mark .dsh-sh__crack-band,
 .dsh-sh__mark .dsh-sh__crack-flow,
 .dsh-sh__mark .dsh-sh__crack-core,
@@ -345,10 +354,38 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-/* Cooling metal around the fissure: wide and dim, and the tariff's own colour. */
+/* The scatter: wide, soft, and moving.
+ *
+ * A blur is what separates light in a medium from a thicker line — with a hard edge
+ * a wide stroke just reads as a fatter tube. Its colour is the travelling gradient,
+ * set in the markup so that a preview gets its own copy of it, which does two things
+ * at once: the haze is the *light* colour, near-white, so it separates from a plate
+ * that is already orange at peak — the tariff colour alone has almost no contrast
+ * there — and its brightness travels, which is the part of a Tyndall beam the eye
+ * actually reads as light rather than as paint.
+ *
+ * The drift is slow and shallow on purpose: it is the haze breathing, not the
+ * filament, and it runs at the ring's own period so the two read as one light. */
 .dsh-sh__mark .dsh-sh__crack-halo {
+  opacity: 0.5;
+  filter: blur(1px);
+  animation: dsh-sh-scatter 3.6s ease-in-out infinite;
+}
+@keyframes dsh-sh-scatter {
+  0%,
+  100% {
+    opacity: 0.36;
+  }
+  50% {
+    opacity: 0.64;
+  }
+}
+/* The tighter scatter, and the step down to the band. This one keeps the tariff's
+   own colour: it is the light's body, where the halo is the metal glowing. */
+.dsh-sh__mark .dsh-sh__crack-bloom {
   stroke: var(--dsh-sh-band);
-  opacity: 0.26;
+  opacity: 0.5;
+  filter: blur(0.5px);
 }
 /* The hot band. */
 .dsh-sh__mark .dsh-sh__crack-band {
@@ -360,11 +397,18 @@
 .dsh-sh__mark .dsh-sh__crack-flow {
   opacity: 0.9;
 }
-/* The centre, narrow and bright: the light comes from inside the crack. */
+/* The narrow centre.
+ *
+ * It stays flat, and that is deliberate: the brightest, narrowest pass is what makes
+ * a lit fracture read as light rather than as a warm line, and a crack whose whole
+ * length dims together stops being legible at badge size. What travels is the wider
+ * `flow` pass underneath it — see `flowStops`. The tariff colour is flat in the band
+ * below that, so the crack's colour never drifts with its brightness. */
 .dsh-sh__mark .dsh-sh__crack-core {
   stroke: var(--dsh-sh-core);
 }
-/* The specular line inside the centre. */
+/* The specular hairline. Constant, and the only part of the stack that is: at a third
+   of a unit it is a glint on the light rather than a line of its own. */
 .dsh-sh__mark .dsh-sh__crack-flare {
   stroke: rgba(255, 255, 245, 0.95);
 }
@@ -992,6 +1036,7 @@ body:not([data-ds-dark-theme]) .dsh-sh__read .dsh-sh__detail {
   }
   .dsh-sh__row.is-critical .dsh-sh__fill,
   .dsh-sh__row.is-changed .dsh-sh__fill,
+  .dsh-sh__mark .dsh-sh__crack-halo,
   .dsh-sh__mark[data-tariff="peak"][data-burn="4"] .dsh-sh__heat,
   .dsh-sh__mark[data-burn="1"] .dsh-sh__gauge,
   .dsh-sh__mark[data-burn="1"] .dsh-sh__gauge-core,

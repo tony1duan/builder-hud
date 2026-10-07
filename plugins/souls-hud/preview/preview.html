@@ -296,12 +296,20 @@
  * passes are the ring's own stack, scaled up, so a lit fracture is unmistakably the
  * same light as the arc that lit it:
  *
- *   halo   wide and dim, past the crack on both sides — light coming *out* of it
+ *   halo   widest and softest: light scattered in the metal around the crack, which
+ *          is the part that makes it read as light *behind* the plate rather than
+ *          as a bright line on it. Blurred, and its strength drifts
+ *   bloom  the same scatter, tighter and stronger, so the falloff from haze to band
+ *          has somewhere to happen
  *   band   the tariff colour, from `--dsh-sh-band`, which is why a lit crack and the
  *          ring cannot drift apart
  *   flow   the shared drifting gradient, so the brightness inside travels
  *   core   the near-white centre
  *   flare  the specular line inside that
+ *
+ * The scatter is what the metal does to the light; everything from the band up is
+ * what the light is. Only the scatter is blurred, and only because a hard-edged wide
+ * stroke is a fatter tube rather than a softer one.
  *
  * Nothing here is per-frame work: one attribute per fracture per poll, and the
  * transition below does the coming and going.
@@ -328,6 +336,7 @@
   opacity: 1;
 }
 .dsh-sh__mark .dsh-sh__crack-halo,
+.dsh-sh__mark .dsh-sh__crack-bloom,
 .dsh-sh__mark .dsh-sh__crack-band,
 .dsh-sh__mark .dsh-sh__crack-flow,
 .dsh-sh__mark .dsh-sh__crack-core,
@@ -336,10 +345,38 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-/* Cooling metal around the fissure: wide and dim, and the tariff's own colour. */
+/* The scatter: wide, soft, and moving.
+ *
+ * A blur is what separates light in a medium from a thicker line — with a hard edge
+ * a wide stroke just reads as a fatter tube. Its colour is the travelling gradient,
+ * set in the markup so that a preview gets its own copy of it, which does two things
+ * at once: the haze is the *light* colour, near-white, so it separates from a plate
+ * that is already orange at peak — the tariff colour alone has almost no contrast
+ * there — and its brightness travels, which is the part of a Tyndall beam the eye
+ * actually reads as light rather than as paint.
+ *
+ * The drift is slow and shallow on purpose: it is the haze breathing, not the
+ * filament, and it runs at the ring's own period so the two read as one light. */
 .dsh-sh__mark .dsh-sh__crack-halo {
+  opacity: 0.5;
+  filter: blur(1px);
+  animation: dsh-sh-scatter 3.6s ease-in-out infinite;
+}
+@keyframes dsh-sh-scatter {
+  0%,
+  100% {
+    opacity: 0.36;
+  }
+  50% {
+    opacity: 0.64;
+  }
+}
+/* The tighter scatter, and the step down to the band. This one keeps the tariff's
+   own colour: it is the light's body, where the halo is the metal glowing. */
+.dsh-sh__mark .dsh-sh__crack-bloom {
   stroke: var(--dsh-sh-band);
-  opacity: 0.26;
+  opacity: 0.5;
+  filter: blur(0.5px);
 }
 /* The hot band. */
 .dsh-sh__mark .dsh-sh__crack-band {
@@ -351,11 +388,18 @@
 .dsh-sh__mark .dsh-sh__crack-flow {
   opacity: 0.9;
 }
-/* The centre, narrow and bright: the light comes from inside the crack. */
+/* The narrow centre.
+ *
+ * It stays flat, and that is deliberate: the brightest, narrowest pass is what makes
+ * a lit fracture read as light rather than as a warm line, and a crack whose whole
+ * length dims together stops being legible at badge size. What travels is the wider
+ * `flow` pass underneath it — see `flowStops`. The tariff colour is flat in the band
+ * below that, so the crack's colour never drifts with its brightness. */
 .dsh-sh__mark .dsh-sh__crack-core {
   stroke: var(--dsh-sh-core);
 }
-/* The specular line inside the centre. */
+/* The specular hairline. Constant, and the only part of the stack that is: at a third
+   of a unit it is a glint on the light rather than a line of its own. */
 .dsh-sh__mark .dsh-sh__crack-flare {
   stroke: rgba(255, 255, 245, 0.95);
 }
@@ -983,6 +1027,7 @@ body:not([data-ds-dark-theme]) .dsh-sh__read .dsh-sh__detail {
   }
   .dsh-sh__row.is-critical .dsh-sh__fill,
   .dsh-sh__row.is-changed .dsh-sh__fill,
+  .dsh-sh__mark .dsh-sh__crack-halo,
   .dsh-sh__mark[data-tariff="peak"][data-burn="4"] .dsh-sh__heat,
   .dsh-sh__mark[data-burn="1"] .dsh-sh__gauge,
   .dsh-sh__mark[data-burn="1"] .dsh-sh__gauge-core,
@@ -1091,7 +1136,7 @@ body:not([data-ds-dark-theme]) .dsh-sh__read .dsh-sh__detail {
     </div>
   </div>
 <script>
-  var SCENES = {"dark":{"label":"DSH-like dark frame","balance":{"available":true,"currency":"CNY","recharge":11.68,"bonus":4.2,"hpRatio":0.2336,"fpRatio":0.084},"context":{"available":true,"used":235480,"total":1000000,"percent":24,"ratio":0.23548},"surface":"dark"},"full":{"label":"healthy vitals","balance":{"available":true,"currency":"CNY","recharge":47.5,"bonus":21.4,"hpRatio":0.95,"fpRatio":0.428},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742},"surface":"dark"},"critical":{"label":"critical HP","balance":{"available":true,"currency":"CNY","recharge":4.1,"bonus":0,"hpRatio":0.082,"fpRatio":0},"context":{"available":true,"used":931000,"total":1000000,"percent":93,"ratio":0.931},"surface":"dark"},"light":{"label":"light theme legibility","balance":{"available":true,"currency":"CNY","recharge":11.68,"bonus":4.2,"hpRatio":0.2336,"fpRatio":0.084},"context":{"available":true,"used":235480,"total":1000000,"percent":24,"ratio":0.23548},"surface":"light"},"unknown":{"label":"signed out / no session","balance":{"available":false,"reason":"signed-out"},"context":{"available":false,"reason":"no-session"},"surface":"dark"},"anchor":{"label":"chat anchor — your live vitals","surface":"dark","mock":true,"balance":{"available":true,"currency":"CNY","recharge":10.4,"bonus":0,"hpRatio":0.208,"fpRatio":0},"context":{"available":true,"used":355182,"total":1000000,"percent":36,"ratio":0.355182}},"zoom":{"label":"detail — 3x","balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742},"surface":"dark","scale":3,"width":272},"damage":{"label":"taking a hit — pale trail draining","surface":"dark","scale":2,"width":272,"pollMs":300,"sequence":[{"balance":{"available":true,"currency":"CNY","recharge":46,"bonus":12.75,"hpRatio":0.92,"fpRatio":0.255},"context":{"available":true,"used":300000,"total":1000000,"percent":30,"ratio":0.3}},{"balance":{"available":true,"currency":"CNY","recharge":26.5,"bonus":12.75,"hpRatio":0.53,"fpRatio":0.255},"context":{"available":true,"used":880000,"total":1000000,"percent":88,"ratio":0.88}}]},"moon-silver":{"label":"live mark — moon on silver","surface":"dark","device":"moon","material":"silver","width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"sword-iron-light":{"label":"live mark — sword on iron (light)","surface":"light","device":"sword","material":"iron","width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"burn-low":{"label":"burn — 25%, off-peak (cool)","surface":"dark","device":"moon","material":"silver","burnRatio":0.25,"tpm":5000,"tariff":"offpeak","width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"burn-high":{"label":"burn — 90%, peak (amber, breathing)","surface":"dark","device":"whale","material":"bronze","burnRatio":0.9,"tpm":18000,"tariff":"peak","width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"burn-octagon":{"label":"burn — 60%, peak, octagon","surface":"light","device":"sword","material":"iron","shape":"octagon","burnRatio":0.6,"tpm":12000,"tariff":"peak","width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"heat-peak":{"label":"peak, idle ring — the medal runs hot","surface":"dark","tariff":"peak","level":0,"burnRatio":0,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.74}},"heat-offpeak":{"label":"off-peak, idle ring — the same badge, cold","surface":"dark","tariff":"offpeak","level":0,"burnRatio":0,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.74}},"heat-peak-hot":{"label":"peak, burning — the overlay at full","surface":"dark","tariff":"peak","level":4,"burnRatio":1,"tpm":18400,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.74}},"heat-peak-light":{"label":"peak, idle, light cut","surface":"light","tariff":"peak","level":0,"burnRatio":0,"material":"bronze","balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.74}},"heat-peak-octagon":{"label":"peak, idle, octagon plate","surface":"dark","tariff":"peak","level":0,"burnRatio":0,"shape":"octagon","balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.74}},"cells":{"label":"settings preview board — theme × tariff","surface":"dark","cells":true,"device":"moon","material":"silver","burnRatio":0.62,"tpm":12400,"cacheTpm":900000,"tariff":"peak","width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"cells-light":{"label":"settings preview board — on a light page","surface":"light","cells":true,"device":"moon","material":"silver","burnRatio":0.62,"tpm":12400,"cacheTpm":900000,"tariff":"peak","width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"badges":{"label":"devices × metals — dark cut","surface":"dark","gallery":true,"width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"badges-light":{"label":"devices × metals — light cut","surface":"light","gallery":true,"width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}}};
+  var SCENES = {"dark":{"label":"DSH-like dark frame","balance":{"available":true,"currency":"CNY","recharge":11.68,"bonus":4.2,"hpRatio":0.2336,"fpRatio":0.084},"context":{"available":true,"used":235480,"total":1000000,"percent":24,"ratio":0.23548},"surface":"dark"},"full":{"label":"healthy vitals","balance":{"available":true,"currency":"CNY","recharge":47.5,"bonus":21.4,"hpRatio":0.95,"fpRatio":0.428},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742},"surface":"dark"},"critical":{"label":"critical HP","balance":{"available":true,"currency":"CNY","recharge":4.1,"bonus":0,"hpRatio":0.082,"fpRatio":0},"context":{"available":true,"used":931000,"total":1000000,"percent":93,"ratio":0.931},"surface":"dark"},"light":{"label":"light theme legibility","balance":{"available":true,"currency":"CNY","recharge":11.68,"bonus":4.2,"hpRatio":0.2336,"fpRatio":0.084},"context":{"available":true,"used":235480,"total":1000000,"percent":24,"ratio":0.23548},"surface":"light"},"unknown":{"label":"signed out / no session","balance":{"available":false,"reason":"signed-out"},"context":{"available":false,"reason":"no-session"},"surface":"dark"},"anchor":{"label":"chat anchor — your live vitals","surface":"dark","mock":true,"balance":{"available":true,"currency":"CNY","recharge":10.4,"bonus":0,"hpRatio":0.208,"fpRatio":0},"context":{"available":true,"used":355182,"total":1000000,"percent":36,"ratio":0.355182}},"zoom":{"label":"detail — 3x","balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742},"surface":"dark","scale":3,"width":272},"damage":{"label":"taking a hit — pale trail draining","surface":"dark","scale":2,"width":272,"pollMs":300,"sequence":[{"balance":{"available":true,"currency":"CNY","recharge":46,"bonus":12.75,"hpRatio":0.92,"fpRatio":0.255},"context":{"available":true,"used":300000,"total":1000000,"percent":30,"ratio":0.3}},{"balance":{"available":true,"currency":"CNY","recharge":26.5,"bonus":12.75,"hpRatio":0.53,"fpRatio":0.255},"context":{"available":true,"used":880000,"total":1000000,"percent":88,"ratio":0.88}}]},"moon-silver":{"label":"live mark — moon on silver","surface":"dark","device":"moon","material":"silver","width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"sword-iron-light":{"label":"live mark — sword on iron (light)","surface":"light","device":"sword","material":"iron","width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"burn-low":{"label":"burn — 25%, off-peak (cool)","surface":"dark","device":"moon","material":"silver","burnRatio":0.25,"tpm":5000,"tariff":"offpeak","width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"burn-high":{"label":"burn — 90%, peak (amber, breathing)","surface":"dark","device":"whale","material":"bronze","burnRatio":0.9,"tpm":18000,"tariff":"peak","width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"burn-octagon":{"label":"burn — 60%, peak, octagon","surface":"light","device":"sword","material":"iron","shape":"octagon","burnRatio":0.6,"tpm":12000,"tariff":"peak","width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"burn-detail":{"label":"detail — the light in the fractures, 3x","surface":"dark","device":"whale","material":"bronze","scale":3,"width":272,"burnRatio":0.9,"tpm":18000,"tariff":"peak","balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"heat-peak":{"label":"peak, idle ring — the medal runs hot","surface":"dark","tariff":"peak","level":0,"burnRatio":0,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.74}},"heat-offpeak":{"label":"off-peak, idle ring — the same badge, cold","surface":"dark","tariff":"offpeak","level":0,"burnRatio":0,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.74}},"heat-peak-hot":{"label":"peak, burning — the overlay at full","surface":"dark","tariff":"peak","level":4,"burnRatio":1,"tpm":18400,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.74}},"heat-peak-light":{"label":"peak, idle, light cut","surface":"light","tariff":"peak","level":0,"burnRatio":0,"material":"bronze","balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.74}},"heat-peak-octagon":{"label":"peak, idle, octagon plate","surface":"dark","tariff":"peak","level":0,"burnRatio":0,"shape":"octagon","balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.74}},"cells":{"label":"settings preview board — theme × tariff","surface":"dark","cells":true,"device":"moon","material":"silver","burnRatio":0.62,"tpm":12400,"cacheTpm":900000,"tariff":"peak","width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"cells-light":{"label":"settings preview board — on a light page","surface":"light","cells":true,"device":"moon","material":"silver","burnRatio":0.62,"tpm":12400,"cacheTpm":900000,"tariff":"peak","width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"badges":{"label":"devices × metals — dark cut","surface":"dark","gallery":true,"width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}},"badges-light":{"label":"devices × metals — light cut","surface":"light","gallery":true,"width":272,"balance":{"available":true,"currency":"CNY","recharge":31.4,"bonus":12.75,"hpRatio":0.628,"fpRatio":0.255},"context":{"available":true,"used":742000,"total":1000000,"percent":74,"ratio":0.742}}};
   function scene() {
     var key = (location.hash || '#dark').slice(1);
     return SCENES[key] || SCENES.dark;
@@ -2285,6 +2330,28 @@ body:not([data-ds-dark-theme]) .dsh-sh__read .dsh-sh__detail {
   var CRACK_TAPER = [1, 0.72, 0.45];
 
   /**
+   * How bright each third of a lit fracture is, from the rim inwards.
+   *
+   * A fracture lit from behind is brightest at its mouth and loses light as it runs
+   * into the casting: the gap is widest where it opens onto the edge, and the metal
+   * around it is what the light has to scatter through. So the outer third carries
+   * the gauge's own strength — `1` is the arc's brightness, not a fraction of it —
+   * and the two thirds behind it step gently down.
+   *
+   * Indexed by the same taper bucket `crackPaths` splits its runs on, so a run of
+   * constant width is also a run of constant brightness and the two steps land
+   * together instead of making a seam of their own.
+   */
+  var CRACK_SHADES = [1, 0.78, 0.5];
+
+  /**
+   * The same ramp for the scatter, which is already dim and soft: taking a full third
+   * off the far end of a blurred pass reads as a hole in the haze rather than as
+   * falloff, so it steps down by less.
+   */
+  var CRACK_SCATTER_SHADES = [1, 0.86, 0.66];
+
+  /**
    * How far short of a fracture the arc may be and still light it.
    *
    * The lit arc's own end carries a round cap and a glow that reach past the dash,
@@ -2387,9 +2454,15 @@ body:not([data-ds-dark-theme]) .dsh-sh__read .dsh-sh__detail {
    * is drawn whether or not it is lit — the stylesheet decides which of them paint,
    * which is what lets one mechanism serve both the dark red rest state and the glow.
    *
-   * The passes are the ring's own stack, scaled up: a wide halo past the crack (that
-   * is the difference between "the crack is lit" and "light is coming out of it"), the
-   * band, the travelling flow, the core, and the specular flare inside it.
+   * The passes are the ring's own stack, scaled up: a wide halo and a tighter bloom
+   * past the crack (those are the difference between "the crack is lit" and "light is
+   * coming out of it"), the band, the travelling flow, the core, and the specular
+   * flare inside it. The two scatter passes are what the metal does to the light and
+   * the band upward is what the light is; the stylesheet blurs the scatter, which is
+   * the whole reason it reads as a medium rather than as a wider line.
+   *
+   * Every pass is shaded along its length — the scatter more gently than the light
+   * itself, for the reason `CRACK_SCATTER_SHADES` gives. See `CRACK_SHADES`.
    *
    * @param crack - one entry of `geometry.cracks`.
    * @param index - its position, for the DOM.
@@ -2402,13 +2475,18 @@ body:not([data-ds-dark-theme]) .dsh-sh__read .dsh-sh__detail {
       '<g class="dsh-sh__crack" data-crack="' + index + '" data-at="' + round3(rimAngle(crack)) + '"' +
       (lit ? ' data-lit="1"' : "") +
       ">" +
-      '<g class="dsh-sh__crack-halo">' + crackPaths([crack], 3.4) + "</g>" +
-      '<g class="dsh-sh__crack-band">' + crackPaths([crack], 2.1) + "</g>" +
       // The gradient is referenced from the markup rather than the stylesheet, so
-      // that `previewSvg`'s id re-pointing reaches it and a preview gets its own.
-      '<g class="dsh-sh__crack-flow" stroke="url(#dsh-sh-flow)">' + crackPaths([crack], 1.15) + "</g>" +
-      '<g class="dsh-sh__crack-core">' + crackPaths([crack], 0.8) + "</g>" +
-      '<g class="dsh-sh__crack-flare">' + crackPaths([crack], 0.34) + "</g>" +
+      // that `previewSvg`'s id re-pointing reaches it and a preview gets its own. The
+      // scatter carries it at the widest scale: the haze around a lit crack is the
+      // same travelling light the arc is made of, which is what makes the two one
+      // object — and it is the *light* colour, near-white, so it separates from a
+      // plate that is already orange at peak.
+      '<g class="dsh-sh__crack-halo" stroke="url(#dsh-sh-flow)">' + crackPaths([crack], 5.8, CRACK_SCATTER_SHADES) + "</g>" +
+      '<g class="dsh-sh__crack-bloom">' + crackPaths([crack], 3.9, CRACK_SCATTER_SHADES) + "</g>" +
+      '<g class="dsh-sh__crack-band">' + crackPaths([crack], 2.1, CRACK_SHADES) + "</g>" +
+      '<g class="dsh-sh__crack-flow" stroke="url(#dsh-sh-flow)">' + crackPaths([crack], 1.9, CRACK_SHADES) + "</g>" +
+      '<g class="dsh-sh__crack-core">' + crackPaths([crack], 0.8, CRACK_SHADES) + "</g>" +
+      '<g class="dsh-sh__crack-flare">' + crackPaths([crack], 0.34, CRACK_SHADES) + "</g>" +
       (crack.w >= 0.75
         ? '<circle class="dsh-sh__crack-spill" cx="' + at[0] + '" cy="' + at[1] + '" r="' + round3(crack.w * 1.2) + '"/>'
         : "") +
@@ -2431,9 +2509,13 @@ body:not([data-ds-dark-theme]) .dsh-sh__read .dsh-sh__detail {
    * @param cracks - the frame's fracture data.
    * @param scale - multiplies every width; the glow passes use it to spill past
    *   the crack they follow.
+   * @param shades - per-taper-bucket `stroke-opacity`, outermost first, or omitted
+   *   for a pass that is evenly bright along the crack. `stroke-opacity` rather than
+   *   `opacity` on purpose: the group's own opacity is the burn level, and this has
+   *   to multiply it rather than replace it.
    * @returns the `<path>` elements.
    */
-  function crackPaths(cracks, scale) {
+  function crackPaths(cracks, scale, shades) {
     var factor = typeof scale === "number" && scale > 0 ? scale : 1;
     var out = "";
     for (var c = 0; c < cracks.length; c += 1) {
@@ -2441,20 +2523,40 @@ body:not([data-ds-dark-theme]) .dsh-sh__read .dsh-sh__detail {
       var pts = crack.pts;
       var run = null;
       var runWidth = 0;
+      var runShade = null;
       for (var i = 1; i < pts.length; i += 1) {
         var along = (i - 1) / Math.max(1, pts.length - 1);
-        var step = CRACK_TAPER[along < 0.34 ? 0 : along < 0.67 ? 1 : 2];
+        var bucket = along < 0.34 ? 0 : along < 0.67 ? 1 : 2;
+        var step = CRACK_TAPER[bucket];
         var width = Math.round(crack.w * step * factor * 100) / 100;
+        var shade = shades ? shades[bucket] : null;
         if (run === null || width !== runWidth) {
-          if (run !== null) out += '<path stroke-width="' + runWidth + '" d="' + run + '"/>';
+          if (run !== null) out += crackRun(run, runWidth, runShade);
           run = "M" + pts[i - 1][0] + " " + pts[i - 1][1];
           runWidth = width;
+          runShade = shade;
         }
         run += "L" + pts[i][0] + " " + pts[i][1];
       }
-      if (run !== null) out += '<path stroke-width="' + runWidth + '" d="' + run + '"/>';
+      if (run !== null) out += crackRun(run, runWidth, runShade);
     }
     return out;
+  }
+
+  /**
+   * One run of constant width, at the brightness its place on the crack earns.
+   *
+   * @param d - the path data.
+   * @param width - its `stroke-width`.
+   * @param shade - its `stroke-opacity`, or null to leave the pass even.
+   * @returns the `<path>`.
+   */
+  function crackRun(d, width, shade) {
+    return (
+      '<path stroke-width="' + width + '"' +
+      (shade === null || shade === undefined ? "" : ' stroke-opacity="' + round3(shade) + '"') +
+      ' d="' + d + '"/>'
+    );
   }
 
   /**

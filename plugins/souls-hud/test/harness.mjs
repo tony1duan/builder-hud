@@ -905,7 +905,13 @@ assert.ok(hudJs.includes('/state.json'), 'renderer must poll the state route')
   )
   // A lit fracture takes its colour from the same custom properties the ring uses,
   // which is the only reason the two cannot drift apart as the tariff changes.
-  for (const layer of ['halo', 'band']) {
+  //
+  // The halo is the exception, and it is a deliberate one: it is the *scatter*, the
+  // part that reads as light in the metal rather than as the light's own body, and it
+  // strokes the travelling gradient — the near-white the ring's flow pass is made of.
+  // The tariff colour itself is in the band below it, which is what a colour change
+  // actually moves.
+  for (const layer of ['band']) {
     assert.ok(
       new RegExp(`\\.dsh-sh__crack-${layer}\\s*\\{[^}]*stroke:\\s*var\\(--dsh-sh-band`).test(hudCss),
       `a lit fracture's ${layer} must stroke var(--dsh-sh-band), the ring's own colour`,
@@ -914,6 +920,32 @@ assert.ok(hudJs.includes('/state.json'), 'renderer must poll the state route')
   assert.ok(
     /\.dsh-sh__crack-core\s*\{[^}]*stroke:\s*var\(--dsh-sh-core/.test(hudCss),
     "a lit fracture's core must stroke var(--dsh-sh-core), the ring's own core",
+  )
+  // The scatter has to be *soft*. A wide stroke with a hard edge is a fatter tube, not
+  // a haze, so both scatter passes carry a blur — and the halo, the wide one, has to
+  // be the softer of the two.
+  const blurOf = (layer) => {
+    const rule = new RegExp(`\\.dsh-sh__crack-${layer}\\s*\\{([^}]*)\\}`).exec(hudCss.replace(/\/\*[\s\S]*?\*\//g, ''))
+    assert.ok(rule, `hud.css must style .dsh-sh__crack-${layer}`)
+    const blur = /filter:\s*blur\(([\d.]+)px\)/.exec(rule[1])
+    assert.ok(blur, `the ${layer} is scatter and must be blurred, or it is only a wider line`)
+    return Number(blur[1])
+  }
+  assert.ok(
+    blurOf('halo') > blurOf('bloom'),
+    'the halo is the wider scatter and must be the softer one',
+  )
+  // And the haze breathes. Its drift moves `opacity` — unlike the flow's, which has to
+  // move `stop-opacity` — because this is a real group that paints.
+  const scatter = /@keyframes\s+dsh-sh-scatter\s*\{([\s\S]*?)\n\}/.exec(hudCss)
+  assert.ok(scatter, 'hud.css must define the scatter drift')
+  assert.ok(
+    /opacity\s*:/.test(scatter[1]) && !/stop-opacity\s*:/.test(scatter[1]),
+    'the scatter drift moves the group, not a gradient stop',
+  )
+  assert.ok(
+    /\.dsh-sh__crack-halo\s*\{[^}]*animation\s*:\s*dsh-sh-scatter/.test(hudCss.replace(/\/\*[\s\S]*?\*\//g, '')),
+    'the scatter must carry its own drift',
   )
 }
 

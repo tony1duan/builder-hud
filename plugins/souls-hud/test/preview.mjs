@@ -182,6 +182,27 @@ const SCENES = {
     balance: { available: true, currency: 'CNY', recharge: 31.4, bonus: 12.75, hpRatio: 0.628, fpRatio: 0.255 },
     context: { available: true, used: 742000, total: 1000000, percent: 74, ratio: 0.742 },
   },
+  // The light in the fractures, close up.
+  //
+  // At 1x a lit fracture is a few pixels wide, which is the size at which the
+  // question "is that light coming out of it, or a red line?" is settled. The
+  // `zoom` scene above magnifies the frame, but nothing is burning in it, so it
+  // shows the resting dark red and nothing else; this one magnifies the same frame
+  // at a burn rate whose arc has covered most of the rim, which is the only state
+  // in which the glow exists at all.
+  'burn-detail': {
+    label: 'detail — the light in the fractures, 3x',
+    surface: 'dark',
+    device: 'whale',
+    material: 'bronze',
+    scale: 3,
+    width: 272,
+    burnRatio: 0.9,
+    tpm: 18000,
+    tariff: 'peak',
+    balance: { available: true, currency: 'CNY', recharge: 31.4, bonus: 12.75, hpRatio: 0.628, fpRatio: 0.255 },
+    context: { available: true, used: 742000, total: 1000000, percent: 74, ratio: 0.742 },
+  },
   // The heat overlay, idle ring. Peak and off-peak have to differ when nothing is
   // burning, which is most of the time — that is the whole point of the overlay.
   'heat-peak': {
