@@ -98,9 +98,23 @@ are recorded here rather than rediscovered:
 
 - **The social preview card** is `.github/social-preview.png`, 1280×640, and it is
   uploaded by hand under *Settings → General → Social preview*. Nothing reads it out
-  of the repository — GitHub has no endpoint for it — so when the medallion or the
+  of the repository — there is no API for the setting — so when the medallion or the
   bars change, it has to be regenerated from a real render and uploaded again, or the
   card keeps advertising a badge that no longer exists.
+
+  To check that an upload took, read the repository page's own `og:image`:
+
+  ```sh
+  curl -sL https://github.com/tony1duan/builder-hud |
+    grep -o 'property="og:image" content="[^"]*"'
+  ```
+
+  A **custom** preview answers with `https://repository-images.githubusercontent.com/…`,
+  and that URL is the uploaded file — fetch it and it is byte-for-byte the card. Do
+  *not* check `https://opengraph.githubassets.com/<anything>/tony1duan/builder-hud`:
+  that endpoint renders GitHub's *own* card — repository name, description, star count
+  — whether or not a custom image is set. It is a convincing way to conclude an upload
+  failed when it succeeded.
 - **Private vulnerability reporting is on**, which is what `SECURITY.md` sends people
   to. If it is ever turned off, that document's only reporting route is a dead end.
 
