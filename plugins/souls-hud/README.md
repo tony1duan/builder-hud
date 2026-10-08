@@ -657,6 +657,11 @@ the badge is worse than none. Two details make it work:
 
 ## Installation
 
+**Both packages are on npm**, and the usual way in is the *bundle*, not this one:
+`pnpm add dsh-plugin-builder-hud` in your profile brings this package in as its
+dependency, and the bundle's `cordis.patch.yml` already carries the row that loads it.
+You only need the manifest below when you are working from a checkout.
+
 The host half is a plain Cordis plugin with **no `@deepseek-ai/*` imports**, so a
 profile can load it straight from an absolute path with one patch row. See
 [`../builder-hud/cordis.patch.example.yml`](../builder-hud/cordis.patch.example.yml):

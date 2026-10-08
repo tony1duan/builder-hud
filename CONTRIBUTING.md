@@ -104,12 +104,19 @@ are recorded here rather than rediscovered:
 - **Private vulnerability reporting is on**, which is what `SECURITY.md` sends people
   to. If it is ever turned off, that document's only reporting route is a dead end.
 
-Both packages are prepared for npm, and `test/repo.mjs` holds the invariants that keep
-them publishable: not `private`, a real version range rather than a `link:`, a range
-the sibling package can satisfy, and a `LICENSE` that matches the repository's. The
-install instructions move to npm in the same commit that publishes them — a README
-that sends a reader to a package that is not on the registry yet is worse than one that
-still says "from a checkout".
+Both packages are published to npm as **`dsh-plugin-souls-hud`** and
+**`dsh-plugin-builder-hud`**, and `test/repo.mjs` holds the invariants that keep them
+publishable: not `private`, a real version range rather than a `link:`, a range the
+sibling package can satisfy, and a `LICENSE` that matches the repository's.
+
+Two things about publishing them are worth knowing before the next release, because
+both cost an afternoon to work out. **The first version of a brand-new package cannot
+be staged** — npm refuses to stage a package that does not exist, and a stage-only
+token is refused outright — so the first publish needs a token with *Read and write
+(publish and stage)*. And **the registry is slow**: `npm publish` returns before the
+version is visible, and a second attempt during that window fails with `409 Cannot
+publish over previously staged version`, which reads exactly like a burnt version
+number and is not one. Wait and re-query the registry before concluding anything.
 
 ## Changing something in the running app
 
